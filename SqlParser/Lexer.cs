@@ -120,6 +120,7 @@ namespace SqlParser
 
         private Token GetNumToken()
         {
+            //TODO accept double literals
             var lexeme = new StringBuilder(_currentSymbol + "");
             var row = _row;
             var col = _col;
@@ -183,10 +184,14 @@ namespace SqlParser
             _reservedWords.Add("set", TokenType.RwSet);
             _reservedWords.Add("where", TokenType.RwWhere);
             _reservedWords.Add("database", TokenType.RwDatabase);
+            _reservedWords.Add("table", TokenType.RwDatabase);
             _reservedWords.Add("and", TokenType.RwAnd);
             _reservedWords.Add("or", TokenType.RwOr);
             _reservedWords.Add("mb", TokenType.RwMb);
             _reservedWords.Add("gb", TokenType.RwGb);
+            _reservedWords.Add("int", TokenType.RwInt);
+            _reservedWords.Add("double", TokenType.RwDouble);
+            _reservedWords.Add("char", TokenType.RwChar);
         }
     }
 }
