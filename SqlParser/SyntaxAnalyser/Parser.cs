@@ -19,7 +19,12 @@ namespace SqlParser.SyntaxAnalyser
             _currenToken = _lex.GetToken();
         }
 
-        public void Statement()
+        public void Parse()
+        {
+            Statement();
+        }
+
+        private void Statement()
         {
             StatementName();
             if (!CheckToken(TokenType.EndStatement))
@@ -116,27 +121,285 @@ namespace SqlParser.SyntaxAnalyser
 
         private void CreateTable()
         {
-            throw new NotImplementedException();
+            if(!CheckToken(TokenType.Id))
+                throw new IdExpectedException(GetTokenRow(), GetTokenColumn());
+
+            NextToken();
+            if (!CheckToken(TokenType.ParenthesisOpen))
+                throw new ParenthesisOpenExpectedException(GetTokenRow(), GetTokenColumn());
+
+            NextToken();
+            ColumnCreationList();
+            if (!CheckToken(TokenType.ParenthesisClose))
+                throw new ParenthesisCloseExpectedException(GetTokenRow(), GetTokenColumn());
+
+            NextToken();
+        }
+
+        private void ColumnCreationList()
+        {
+            if(!CheckToken(TokenType.Id))
+                throw new IdExpectedException(GetTokenRow(), GetTokenColumn());
+
+            NextToken();
+            Type();
+            ColumnCreationListPrime();
+        }
+
+        private void ColumnCreationListPrime()
+        {
+            if (CheckToken(TokenType.Comma))
+            {
+                NextToken();
+                if(!CheckToken(TokenType.Id))
+                    throw new IdExpectedException(GetTokenRow(), GetTokenColumn());
+
+                NextToken();
+                Type();
+                ColumnCreationListPrime();
+            }
+            else
+            {
+                //Epsilon
+            }
+        }
+
+        private void Type()
+        {
+            if (CheckToken(TokenType.RwInt) || CheckToken(TokenType.RwDouble)) NextToken();
+            else if (CheckToken(TokenType.RwChar))
+            {
+                NextToken();
+                if(!CheckToken(TokenType.ParenthesisOpen))
+                    throw new ParenthesisOpenExpectedException(GetTokenRow(), GetTokenColumn());
+
+                NextToken();
+                if(!CheckToken(TokenType.LiteralInt))
+                    throw new IntLiteralExpectedException(GetTokenRow(), GetTokenColumn());
+
+                NextToken();
+                if(!CheckToken(TokenType.ParenthesisClose))
+                    throw new ParenthesisCloseExpectedException(GetTokenRow(), GetTokenColumn());
+
+                NextToken();
+            }
+            else throw new ParserException($"'int', 'double', or 'char' keyword expected at row {GetTokenRow()} column {GetTokenColumn()}.");
         }
 
         private void InsertTable()
         {
-            throw new NotImplementedException();
+            if (!CheckToken(TokenType.RwInsert))
+                throw new InsertKeywordExpectedException(GetTokenRow(), GetTokenColumn());
+
+            NextToken();
+            if (!CheckToken(TokenType.RwInto))
+                throw new IntoKeywordExpectedException(GetTokenRow(), GetTokenColumn());
+
+            NextToken();
+            if(!CheckToken(TokenType.Id))
+                throw new IdExpectedException(GetTokenRow(), GetTokenColumn());
+
+            NextToken();
+            if (!CheckToken(TokenType.RwValues))
+                throw new ValuesKeywordExpectedException(GetTokenRow(), GetTokenColumn());
+
+            NextToken();
+            if(!CheckToken(TokenType.ParenthesisOpen))
+                throw new ParenthesisOpenExpectedException(GetTokenRow(), GetTokenColumn());
+
+            NextToken();
+            ValueList();
+            if(!CheckToken(TokenType.ParenthesisClose))
+                throw new ParenthesisCloseExpectedException(GetTokenRow(), GetTokenColumn());
+
+            NextToken();
+        }
+
+        private void ValueList()
+        {
+            Literal();
+            ValueListPrime();
+        }
+
+        private void ValueListPrime()
+        {
+            if (CheckToken(TokenType.Comma))
+            {
+                NextToken();
+                Literal();
+                ValueListPrime();
+            }
+            else
+            {
+                //Epsilon
+            }
         }
 
         private void SelectTable()
         {
-            throw new NotImplementedException();
+            if (!CheckToken(TokenType.RwSelect))
+                throw new SelectKeywordExpectedException(GetTokenRow(), GetTokenColumn());
+
+            NextToken();
+            ColumnList();
+            if (!CheckToken(TokenType.RwFrom))
+                throw new FromKeywordExpectedException(GetTokenRow(), GetTokenColumn());
+
+            NextToken();
+            if(!CheckToken(TokenType.Id))
+                throw new IdExpectedException(GetTokenRow(), GetTokenColumn());
+
+            NextToken();
+            OptionalSelection();
+        }
+
+        private void ColumnList()
+        {
+            if (CheckToken(TokenType.Id))
+            {
+                NextToken();
+                ColumnListPrime();
+            }
+            else if(CheckToken(TokenType.OpAll)) NextToken();
+            else throw new ParserException($"Column name or '*' token expected at row {GetTokenRow()}, {GetTokenColumn()}.");
+        }
+
+        private void ColumnListPrime()
+        {
+            if (CheckToken(TokenType.Comma))
+            {
+                NextToken();
+                if(!CheckToken(TokenType.Id))
+                    throw new IdExpectedException(GetTokenRow(), GetTokenColumn());
+
+                NextToken();
+                ColumnListPrime();
+            }
+            else
+            {
+                //Epsilon
+            }
+        }
+
+        private void OptionalSelection()
+        {
+            if (CheckToken(TokenType.RwWhere))
+            {
+                NextToken();
+                SelectionPredicate();
+                SelectionConjunction();
+            }
+            else
+            {
+                //Epsilon
+            }
+        }
+
+        private void SelectionPredicate()
+        {
+            if(!CheckToken(TokenType.Id))
+                throw new IdExpectedException(GetTokenRow(), GetTokenColumn());
+
+            NextToken();
+            SelectionOperators();
+            Literal();
+        }
+
+        private void SelectionConjunction()
+        {
+            if (CheckToken(TokenType.RwAnd) || CheckToken(TokenType.RwOr))
+            {
+                Conjunction();
+                SelectionPredicate();
+                SelectionConjunction();
+            }
+            else
+            {
+                //Epsilon
+            }
+        }
+
+        private void Conjunction()
+        {
+            if (CheckToken(TokenType.RwAnd) || CheckToken(TokenType.RwOr)) NextToken();
+            else throw new ParserException($"'and' or 'or' keyword expected at row {GetTokenRow()} column {GetTokenColumn()}.");
+        }
+
+        private void SelectionOperators()
+        {
+            if(IsSelectionOperator()) NextToken();
+            else throw new ParserException($"'=', '!=', '>', '<', '>=', or '<=' operator expected at row {GetTokenRow()} column {GetTokenColumn()}.");
         }
 
         private void UpdateTable()
         {
-            throw new NotImplementedException();
+            if(!CheckToken(TokenType.RwUpdate))
+                throw new UpdateKeywordExpectedException(GetTokenRow(), GetTokenColumn());
+
+            NextToken();
+            if(!CheckToken(TokenType.Id))
+                throw new IdExpectedException(GetTokenRow(), GetTokenColumn());
+
+            NextToken();
+            SetUpdate();
+            OptionalSelection();
+        }
+
+        private void SetUpdate()
+        {
+            if (!CheckToken(TokenType.RwSet))
+                throw new SetKeywordExpectedException(GetTokenRow(), GetTokenColumn());
+
+            NextToken();
+            if(!CheckToken(TokenType.Id))
+                throw new IdExpectedException(GetTokenRow(), GetTokenColumn());
+            
+            NextToken();
+            if (!CheckToken(TokenType.OpEqual))
+                throw new EqualOperatorExpectedException(GetTokenRow(), GetTokenColumn());
+
+            NextToken();
+            Literal();
+            SetUpdatePrime();
+        }
+
+        private void SetUpdatePrime()
+        {
+            if (CheckToken(TokenType.Comma))
+            {
+                NextToken();
+                if(!CheckToken(TokenType.Id))
+                    throw new IdExpectedException(GetTokenRow(), GetTokenColumn());
+
+                NextToken();
+                if(!CheckToken(TokenType.OpEqual))
+                    throw new EqualOperatorExpectedException(GetTokenRow(), GetTokenColumn());
+
+                NextToken();
+                Literal();
+                SetUpdatePrime();
+            }
+            else
+            {
+                //Epsilon
+            }
         }
 
         private void DeleteTable()
         {
-            throw new NotImplementedException();
+            if (!CheckToken(TokenType.RwDelete))
+                throw new DeleteKeywordExpectedException(GetTokenRow(), GetTokenColumn());
+
+            NextToken();
+            if(!CheckToken(TokenType.RwFrom))
+                throw new FromKeywordExpectedException(GetTokenRow(), GetTokenColumn());
+
+            NextToken();
+            if(!CheckToken(TokenType.Id))
+                throw new IdExpectedException(GetTokenRow(), GetTokenColumn());
+
+            NextToken();
+            OptionalSelection();
         }
 
         private void NextToken()
@@ -147,6 +410,13 @@ namespace SqlParser.SyntaxAnalyser
         private bool CheckToken(TokenType type)
         {
             return _currenToken.Type == type;
+        }
+
+        private bool IsSelectionOperator()
+        {
+            return CheckToken(TokenType.OpEqual) || CheckToken(TokenType.OpNotEqual) ||
+                   CheckToken(TokenType.OpGreaterThan) || CheckToken(TokenType.OpLessThan) ||
+                   CheckToken(TokenType.OpGreaterThanOrEqual) || CheckToken(TokenType.OpLessThanOrEqual);
         }
 
         private int GetTokenRow()

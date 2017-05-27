@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using SqlParser;
+using SqlParser.SyntaxAnalyser;
 
 namespace DB2CLI
 {
@@ -11,13 +7,9 @@ namespace DB2CLI
     {
         static void Main(string[] args)
         {
-            Lexer lex = new Lexer("UPDATE REGIONS\n SET REGION_NAME = \"HOLA\", SET AGE = 25\n WHERE ID = 5 OR ID = 4;".ToLower());
-            var token = lex.GetToken();
-            while (token != null)
-            {
-                Console.WriteLine($"lexeme: {token.Lexeme}, type: {token.Type}, row: {token.Row}, column: {token.Col}");
-                token = lex.GetToken();
-            }
+            var parser = new Parser("select * from regions".ToLower());
+            parser.Parse();
+            Console.WriteLine("SUCCESS!!");
         }
     }
 }
