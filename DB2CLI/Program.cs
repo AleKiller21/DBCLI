@@ -11,7 +11,7 @@ namespace DB2CLI
     {
         static void Main(string[] args)
         {
-            Lexer lex = new Lexer("UPDATE REGIONS\n SET REGION_NAME = \"HOLA\"\n WHERE ID = 5 OR ID = 4;".ToLower());
+            Lexer lex = new Lexer("UPDATE REGIONS\n SET REGION_NAME = \"HOLA\", SET AGE = 25\n WHERE ID = 5 OR ID = 4;".ToLower());
             var token = lex.GetToken();
             while (token != null)
             {

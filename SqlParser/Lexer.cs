@@ -146,7 +146,8 @@ namespace SqlParser
             {
                 {"(", TokenType.ParenthesisOpen},
                 {")", TokenType.ParenthesisClose},
-                {";", TokenType.EndStatement}
+                {";", TokenType.EndStatement},
+                {",", TokenType.Comma}
             };
 
         }
@@ -157,6 +158,7 @@ namespace SqlParser
             {
                 {"*", TokenType.OpAll},
                 {"=", TokenType.OpEqual},
+                {"!=", TokenType.OpNotEqual },
                 {">", TokenType.OpGreaterThan},
                 {"<", TokenType.OpLessThan },
                 {">=", TokenType.OpGreaterThanOrEqual },

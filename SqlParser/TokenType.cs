@@ -23,12 +23,14 @@
         RwGb,
         OpAll,
         OpEqual,
+        OpNotEqual,
         OpGreaterThan,
         OpLessThan,
         OpGreaterThanOrEqual,
         OpLessThanOrEqual,
         ParenthesisOpen,
         ParenthesisClose,
+        Comma,
         EndStatement,
         Eof
     }
