@@ -7,7 +7,7 @@ namespace DB2CLI
     {
         static void Main(string[] args)
         {
-            var parser = new Parser("select * from regions".ToLower());
+            var parser = new Parser(";".ToLower());
             parser.Parse();
             Console.WriteLine("SUCCESS!!");
         }

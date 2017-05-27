@@ -71,7 +71,7 @@ namespace SqlParser
                 throw new LexerException($"Invalid token at row {_row} column {_col}");
             }
 
-            return null;
+            return new Token("$", TokenType.Eof, _row, _col);
         }
 
         private Token GetStringToken()
