@@ -1,10 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Remoting.Messaging;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
 using SqlParser.SyntaxAnalyser.Exceptions;
+using SqlParser.SyntaxAnalyser.Nodes;
+using SqlParser.SyntaxAnalyser.Nodes.ExpressionNodes;
+using SqlParser.SyntaxAnalyser.Nodes.LiteralNodes;
+using SqlParser.SyntaxAnalyser.Nodes.Operators;
+using SqlParser.SyntaxAnalyser.Nodes.StatementNodes;
+using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.CreateNodes;
+using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.DeleteNodes;
+using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.DropNodes;
+using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.SelectNodes;
+using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.UpdateNodes;
+using SqlParser.SyntaxAnalyser.Nodes.TypeNodes;
 
 namespace SqlParser.SyntaxAnalyser
 {
@@ -19,134 +31,230 @@ namespace SqlParser.SyntaxAnalyser
             _currenToken = _lex.GetToken();
         }
 
-        public void Parse()
+        public StatementNode Parse()
         {
-            Statement();
+            return Statement();
         }
 
-        private void Statement()
+        private StatementNode Statement()
         {
-            StatementName();
+            var statement = StatementName();
+
             if (!CheckToken(TokenType.EndStatement))
                 throw new EndOfStatementException(GetTokenRow(), GetTokenColumn());
 
             NextToken();
+            return statement;
         }
 
-        private void StatementName()
+        private StatementNode StatementName()
         {
-            if (CheckToken(TokenType.RwCreate)) CreateObject();
-            else if (CheckToken(TokenType.RwDrop)) DropObject();
-            else if (CheckToken(TokenType.RwInsert)) InsertTable();
-            else if (CheckToken(TokenType.RwSelect)) SelectTable();
-            else if (CheckToken(TokenType.RwUpdate)) UpdateTable();
-            else if (CheckToken(TokenType.RwDelete)) DeleteTable();
-            else throw new ParserException($"Unexpected token encountered at row {GetTokenRow()} column {GetTokenColumn()}.");
+            if (CheckToken(TokenType.RwCreate)) return CreateObject();
+            if (CheckToken(TokenType.RwDrop)) return DropObject();
+            if (CheckToken(TokenType.RwInsert)) return InsertTable();
+            if (CheckToken(TokenType.RwSelect)) return SelectTable();
+            if (CheckToken(TokenType.RwUpdate)) return UpdateTable();
+            if (CheckToken(TokenType.RwDelete)) return DeleteTable();
+
+            throw new ParserException($"Unexpected token encountered at row {GetTokenRow()} column {GetTokenColumn()}.");
         }
 
-        private void CreateObject()
+        private CreateObjectNode CreateObject()
         {
             if (!CheckToken(TokenType.RwCreate))
                 throw new CreateKeywordExpectedException(GetTokenRow(), GetTokenColumn());
 
             NextToken();
-            CreateObjectPrime();
+            return CreateObjectPrime();
         }
 
-        private void CreateObjectPrime()
+        private CreateObjectNode CreateObjectPrime()
         {
             if (CheckToken(TokenType.RwDatabase))
             {
                 NextToken();
-                CreateDatabase();
+                return CreateDatabase();
             }
-            else if (CheckToken(TokenType.RwTable))
+            if (CheckToken(TokenType.RwTable))
             {
                 NextToken();
-                CreateTable();
+                return CreateTable();
             }
-            else throw new ParserException($"'database' or 'table' keyword expected at row {GetTokenRow()} column {GetTokenColumn()}.");
+
+            throw new ParserException($"'database' or 'table' keyword expected at row {GetTokenRow()} column {GetTokenColumn()}.");
         }
 
-        private void DropObject()
+        private DropObjectNode DropObject()
         {
             if (!CheckToken(TokenType.RwDrop))
                 throw new DropKeywordExpectedException(GetTokenRow(), GetTokenColumn());
 
             NextToken();
-            DatabaseOrTable();
+            return DatabaseOrTable();
+        }
+
+        private DropObjectNode DatabaseOrTable()
+        {
+            if(CheckToken(TokenType.RwDatabase))
+            {
+                NextToken();
+                DropDatabaseNode databaseNode = new DropDatabaseNode();
+                DatabaseStringOrIdentifier(databaseNode);
+                return databaseNode;
+
+            }
+            if (CheckToken(TokenType.RwTable))
+            {
+                NextToken();
+                if(!CheckToken(TokenType.Id))
+                    throw new IdExpectedException(GetTokenRow(), GetTokenColumn());
+
+                var tableName = new IdNode(_currenToken.Lexeme);
+                NextToken();
+
+                return new DropTableNode{Name = tableName};
+            }
+
+            throw new ParserException($"'database' or 'table' keyword expected at row {GetTokenRow()} column {GetTokenColumn()}.");
+        }
+
+        private void DatabaseStringOrIdentifier(DropDatabaseNode databaseNode)
+        {
+            if (CheckToken(TokenType.LiteralString))
+            {
+                databaseNode.Path = new StringNode(_currenToken.Lexeme);
+                NextToken();
+            }
+
+            else if (CheckToken(TokenType.Id))
+            {
+                databaseNode.Name = new IdNode(_currenToken.Lexeme);
+                NextToken();
+            }
+
+            else throw new ParserException($"string or id token expected at row {GetTokenRow()} column {GetTokenColumn()}.");
+        }
+
+        private LiteralNode Literal()
+        {
+            if (CheckToken(TokenType.LiteralString))
+            {
+                var value = new StringNode(_currenToken.Lexeme);
+                NextToken();
+                return value;
+            }
+            if (CheckToken(TokenType.LiteralInt) || CheckToken(TokenType.LiteralDouble)) return Number();
+            throw new ParserException($"numeric or string literal expected at row {GetTokenRow()} column {GetTokenColumn()}.");
+        }
+
+        private LiteralNode Number()
+        {
+            if (CheckToken(TokenType.LiteralInt))
+            {
+                var value = new IntNode(int.Parse(_currenToken.Lexeme));
+                NextToken();
+                return value;
+            }
+            if (CheckToken(TokenType.LiteralDouble))
+            {
+                var value = new DoubleNode(double.Parse(_currenToken.Lexeme));
+                NextToken();
+                return value;
+            }
+
+            throw new ParserException($"int or double literal expected at row {GetTokenRow()} column {GetTokenColumn()}.");
+        }
+
+        private CreateDatabaseNode CreateDatabase()
+        {
+            if (CheckToken(TokenType.Id))
+            {
+                var databaseName = new IdNode(_currenToken.Lexeme);
+
+                NextToken();
+                if (!CheckToken(TokenType.LiteralInt))
+                    throw new IntLiteralExpectedException(GetTokenRow(), GetTokenColumn());
+
+                var size = int.Parse(_currenToken.Lexeme);
+
+                NextToken();
+                var unit = Size();
+
+                return new CreateDatabaseNode(databaseName, unit, size);
+            }
+            if (CheckToken(TokenType.LiteralString))
+            {
+                var databaseName = new StringNode(_currenToken.Lexeme);
+
+                NextToken();
+                if (!CheckToken(TokenType.LiteralInt))
+                    throw new IntLiteralExpectedException(GetTokenRow(), GetTokenColumn());
+
+                var size = int.Parse(_currenToken.Lexeme);
+
+                NextToken();
+                var unit = Size();
+
+                return new CreateDatabaseNode(databaseName, unit, size);
+            }
+
+            throw new ParserException($"string or id token expected at row {GetTokenRow()} column {GetTokenColumn()}.");
+        }
+
+        private UnitSize Size()
+        {
+            if(CheckToken(TokenType.RwMb))
+            {
+                NextToken();
+                return UnitSize.Mb;
+            }
+            if (CheckToken(TokenType.RwGb))
+            {
+                NextToken();
+                return UnitSize.Gb;
+            }
+
+            throw new ParserException($"'mb' or 'gb' size keywords expected at row {GetTokenColumn()} column {GetTokenColumn()}.");
+        }
+
+        private CreateTableNode CreateTable()
+        {
             if(!CheckToken(TokenType.Id))
                 throw new IdExpectedException(GetTokenRow(), GetTokenColumn());
 
-            NextToken();
-        }
-
-        private void DatabaseOrTable()
-        {
-            if(CheckToken(TokenType.RwDatabase) || CheckToken(TokenType.RwTable)) NextToken();
-            else throw new ParserException($"'database' or 'table' keyword expected at row {GetTokenRow()} column {GetTokenColumn()}.");
-        }
-
-        private void Literal()
-        {
-            if(CheckToken(TokenType.LiteralString)) NextToken();
-            else if (CheckToken(TokenType.LiteralInt) || CheckToken(TokenType.LiteralDouble)) Number();
-            else throw new ParserException($"numeric or string literal expected at row {GetTokenRow()} column {GetTokenColumn()}.");
-        }
-
-        private void Number()
-        {
-            if(CheckToken(TokenType.LiteralInt) || CheckToken(TokenType.LiteralDouble)) NextToken();
-            else throw new ParserException($"int or double literal expected at row {GetTokenRow()} column {GetTokenColumn()}.");
-        }
-
-        private void CreateDatabase()
-        {
-            if (!CheckToken(TokenType.Id))
-                throw new IdExpectedException(GetTokenRow(), GetTokenColumn());
-
-            NextToken();
-            if (!CheckToken(TokenType.LiteralInt))
-                throw new IntLiteralExpectedException(GetTokenRow(), GetTokenColumn());
-
-            NextToken();
-            Size();
-        }
-
-        private void Size()
-        {
-            if(CheckToken(TokenType.RwMb) || CheckToken(TokenType.RwGb)) NextToken();
-            else throw new ParserException($"'mb' or 'gb' size keywords expected at row {GetTokenColumn()} column {GetTokenColumn()}.");
-        }
-
-        private void CreateTable()
-        {
-            if(!CheckToken(TokenType.Id))
-                throw new IdExpectedException(GetTokenRow(), GetTokenColumn());
+            var tableName = new IdNode(_currenToken.Lexeme);
 
             NextToken();
             if (!CheckToken(TokenType.ParenthesisOpen))
                 throw new ParenthesisOpenExpectedException(GetTokenRow(), GetTokenColumn());
 
             NextToken();
-            ColumnCreationList();
+            var columns = ColumnCreationList();
             if (!CheckToken(TokenType.ParenthesisClose))
                 throw new ParenthesisCloseExpectedException(GetTokenRow(), GetTokenColumn());
 
             NextToken();
+
+            return new CreateTableNode{Name = tableName, Columns = columns};
         }
 
-        private void ColumnCreationList()
+        private List<ColumnNode> ColumnCreationList()
         {
             if(!CheckToken(TokenType.Id))
                 throw new IdExpectedException(GetTokenRow(), GetTokenColumn());
 
+            var columnName = new IdNode(_currenToken.Lexeme);
+
             NextToken();
-            Type();
-            ColumnCreationListPrime();
+            var type = Type();
+            var column = new ColumnNode{Name = columnName, Type = type};
+            var columnList = ColumnCreationListPrime();
+
+            columnList.Insert(0, column);
+            return columnList;
         }
 
-        private void ColumnCreationListPrime()
+        private List<ColumnNode> ColumnCreationListPrime()
         {
             if (CheckToken(TokenType.Comma))
             {
@@ -154,20 +262,35 @@ namespace SqlParser.SyntaxAnalyser
                 if(!CheckToken(TokenType.Id))
                     throw new IdExpectedException(GetTokenRow(), GetTokenColumn());
 
+                var columnName = new IdNode(_currenToken.Lexeme);
+
                 NextToken();
-                Type();
-                ColumnCreationListPrime();
+                var type = Type();
+                var column = new ColumnNode{Name = columnName, Type = type};
+                var columnList = ColumnCreationListPrime();
+
+                columnList.Insert(0, column);
+                return columnList;
             }
-            else
-            {
-                //Epsilon
-            }
+            
+            return new List<ColumnNode>();
         }
 
-        private void Type()
+        private TypeNode Type()
         {
-            if (CheckToken(TokenType.RwInt) || CheckToken(TokenType.RwDouble)) NextToken();
-            else if (CheckToken(TokenType.RwChar))
+            if (CheckToken(TokenType.RwInt))
+            {
+                NextToken();
+                return new IntTypeNode();
+            }
+
+            if (CheckToken(TokenType.RwDouble))
+            {
+                NextToken();
+                return new DoubleTypeNode();
+            }
+
+            if (CheckToken(TokenType.RwChar))
             {
                 NextToken();
                 if(!CheckToken(TokenType.ParenthesisOpen))
@@ -177,16 +300,20 @@ namespace SqlParser.SyntaxAnalyser
                 if(!CheckToken(TokenType.LiteralInt))
                     throw new IntLiteralExpectedException(GetTokenRow(), GetTokenColumn());
 
+                var size = int.Parse(_currenToken.Lexeme);
+
                 NextToken();
                 if(!CheckToken(TokenType.ParenthesisClose))
                     throw new ParenthesisCloseExpectedException(GetTokenRow(), GetTokenColumn());
 
                 NextToken();
+                return new StringTypeNode{Size = size};
             }
-            else throw new ParserException($"'int', 'double', or 'char' keyword expected at row {GetTokenRow()} column {GetTokenColumn()}.");
+
+            throw new ParserException($"'int', 'double', or 'char' keyword expected at row {GetTokenRow()} column {GetTokenColumn()}.");
         }
 
-        private void InsertTable()
+        private InsertNode InsertTable()
         {
             if (!CheckToken(TokenType.RwInsert))
                 throw new InsertKeywordExpectedException(GetTokenRow(), GetTokenColumn());
@@ -199,6 +326,8 @@ namespace SqlParser.SyntaxAnalyser
             if(!CheckToken(TokenType.Id))
                 throw new IdExpectedException(GetTokenRow(), GetTokenColumn());
 
+            var targetTable = new IdNode(_currenToken.Lexeme);
+
             NextToken();
             if (!CheckToken(TokenType.RwValues))
                 throw new ValuesKeywordExpectedException(GetTokenRow(), GetTokenColumn());
@@ -208,40 +337,46 @@ namespace SqlParser.SyntaxAnalyser
                 throw new ParenthesisOpenExpectedException(GetTokenRow(), GetTokenColumn());
 
             NextToken();
-            ValueList();
+            var values = ValueList();
             if(!CheckToken(TokenType.ParenthesisClose))
                 throw new ParenthesisCloseExpectedException(GetTokenRow(), GetTokenColumn());
 
             NextToken();
+
+            return new InsertNode{TargetTable = targetTable, Values = values};
         }
 
-        private void ValueList()
+        private List<ValueNode> ValueList()
         {
-            Literal();
-            ValueListPrime();
+            var value = new ValueNode { Value = Literal() };
+            var valueList = ValueListPrime();
+
+            valueList.Insert(0, value);
+            return valueList;
         }
 
-        private void ValueListPrime()
+        private List<ValueNode> ValueListPrime()
         {
             if (CheckToken(TokenType.Comma))
             {
                 NextToken();
-                Literal();
-                ValueListPrime();
+                var value = new ValueNode{ Value = Literal() };
+                var valueList = ValueListPrime();
+
+                valueList.Insert(0, value);
+                return valueList;
             }
-            else
-            {
-                //Epsilon
-            }
+
+            return new List<ValueNode>();
         }
 
-        private void SelectTable()
+        private SelectNode SelectTable()
         {
             if (!CheckToken(TokenType.RwSelect))
                 throw new SelectKeywordExpectedException(GetTokenRow(), GetTokenColumn());
 
             NextToken();
-            ColumnList();
+            var columns = ColumnList();
             if (!CheckToken(TokenType.RwFrom))
                 throw new FromKeywordExpectedException(GetTokenRow(), GetTokenColumn());
 
@@ -249,22 +384,34 @@ namespace SqlParser.SyntaxAnalyser
             if(!CheckToken(TokenType.Id))
                 throw new IdExpectedException(GetTokenRow(), GetTokenColumn());
 
+            var sourceTable = new IdNode(_currenToken.Lexeme);
             NextToken();
-            OptionalSelection();
+
+            return new SelectNode{Columns = columns, SourceTable = sourceTable, Selection = OptionalSelection() };
         }
 
-        private void ColumnList()
+        private List<IdNode> ColumnList()
         {
             if (CheckToken(TokenType.Id))
             {
+                var column = new IdNode(_currenToken.Lexeme);
                 NextToken();
-                ColumnListPrime();
+                var columnList = ColumnListPrime();
+
+                columnList.Insert(0, column);
+                return columnList;
             }
-            else if(CheckToken(TokenType.OpAll)) NextToken();
-            else throw new ParserException($"Column name or '*' token expected at row {GetTokenRow()}, {GetTokenColumn()}.");
+
+            if (CheckToken(TokenType.OpAll))
+            {
+                NextToken();
+                return new List<IdNode> { new IdNode("*") };
+            }
+
+            throw new ParserException($"Column name or '*' token expected at row {GetTokenRow()}, {GetTokenColumn()}.");
         }
 
-        private void ColumnListPrime()
+        private List<IdNode> ColumnListPrime()
         {
             if (CheckToken(TokenType.Comma))
             {
@@ -272,66 +419,125 @@ namespace SqlParser.SyntaxAnalyser
                 if(!CheckToken(TokenType.Id))
                     throw new IdExpectedException(GetTokenRow(), GetTokenColumn());
 
+                var column = new IdNode(_currenToken.Lexeme);
                 NextToken();
-                ColumnListPrime();
+                var columnList = ColumnListPrime();
+
+                columnList.Insert(0, column);
+                return columnList;
             }
-            else
-            {
-                //Epsilon
-            }
+            
+            return new List<IdNode>();
         }
 
-        private void OptionalSelection()
+        private ConditionalExpressionNode OptionalSelection()
         {
             if (CheckToken(TokenType.RwWhere))
             {
                 NextToken();
-                SelectionPredicate();
-                SelectionConjunction();
+                return OrExpression();
             }
-            else
-            {
-                //Epsilon
-            }
+
+            return null;
         }
 
-        private void SelectionPredicate()
+        private ConditionalExpressionNode OrExpression()
         {
-            if(!CheckToken(TokenType.Id))
+            return OrExpressionPrime(AndExpression());
+        }
+
+        private ConditionalExpressionNode OrExpressionPrime(ConditionalExpressionNode leftOperand)
+        {
+            if (CheckToken(TokenType.RwOr))
+            {
+                var Operator = OrOperator();
+                Operator.LeftOperand = leftOperand;
+                Operator.RightOperand = AndExpression();
+
+                return OrExpressionPrime(Operator);
+            }
+
+            return leftOperand;
+        }
+
+        private ConditionalExpressionNode AndExpression()
+        {
+            return AndExpressionPrime(SelectionPredicate());
+        }
+
+        private ConditionalExpressionNode AndExpressionPrime(ConditionalExpressionNode leftOperand)
+        {
+            if (CheckToken(TokenType.RwAnd))
+            {
+                var Operator = AndOperator();
+                Operator.LeftOperand = leftOperand;
+                Operator.RightOperand = SelectionPredicate();
+
+                return AndExpressionPrime(Operator);
+            }
+
+            return leftOperand;
+        }
+
+        private UnaryExpressionNode SelectionPredicate()
+        {
+            if (!CheckToken(TokenType.Id))
                 throw new IdExpectedException(GetTokenRow(), GetTokenColumn());
 
+            var identifier = new IdNode(_currenToken.Lexeme);
+
             NextToken();
-            SelectionOperators();
-            Literal();
+            var conditionalNode = SelectionOperators();
+
+            conditionalNode.LeftOperand = identifier;
+            conditionalNode.RightOperand = Literal();
+
+            return new UnaryExpressionNode{Expression = conditionalNode};
         }
 
-        private void SelectionConjunction()
+        private AndExpressionNode AndOperator()
         {
-            if (CheckToken(TokenType.RwAnd) || CheckToken(TokenType.RwOr))
+            if (CheckToken(TokenType.RwAnd))
             {
-                Conjunction();
-                SelectionPredicate();
-                SelectionConjunction();
+                NextToken();
+                return new AndExpressionNode();
             }
-            else
+
+            throw new ParserException($"'and' keyword expected at row {GetTokenRow()} column {GetTokenColumn()}.");
+        }
+
+        private OrExpressionNode OrOperator()
+        {
+            if (CheckToken(TokenType.RwOr))
             {
-                //Epsilon
+                NextToken();
+                return new OrExpressionNode();
             }
+
+            throw new ParserException($"'or' keyword expected at row {GetTokenRow()} column {GetTokenColumn()}.");
         }
 
-        private void Conjunction()
+        private ConditionalNode SelectionOperators()
         {
-            if (CheckToken(TokenType.RwAnd) || CheckToken(TokenType.RwOr)) NextToken();
-            else throw new ParserException($"'and' or 'or' keyword expected at row {GetTokenRow()} column {GetTokenColumn()}.");
+            if (IsSelectionOperator())
+            {
+                ConditionalNode Operator;
+
+                if(CheckToken(TokenType.OpEqual)) Operator = new EqualOperatorNode();
+                else if(CheckToken(TokenType.OpNotEqual)) Operator = new NotEqualOperatorNode();
+                else if (CheckToken(TokenType.OpGreaterThan)) Operator = new GreaterThanOperatorNode();
+                else if (CheckToken(TokenType.OpLessThan)) Operator = new LessThanOperatorNode();
+                else if (CheckToken(TokenType.OpGreaterThanOrEqual)) Operator = new GreaterThanOrEqualOperatorNode();
+                else Operator = new LessThanOrEqualOperatorNode();
+
+                NextToken();
+                return Operator;
+            }
+
+            throw new ParserException($"'=', '!=', '>', '<', '>=', or '<=' operator expected at row {GetTokenRow()} column {GetTokenColumn()}.");
         }
 
-        private void SelectionOperators()
-        {
-            if(IsSelectionOperator()) NextToken();
-            else throw new ParserException($"'=', '!=', '>', '<', '>=', or '<=' operator expected at row {GetTokenRow()} column {GetTokenColumn()}.");
-        }
-
-        private void UpdateTable()
+        private UpdateNode UpdateTable()
         {
             if(!CheckToken(TokenType.RwUpdate))
                 throw new UpdateKeywordExpectedException(GetTokenRow(), GetTokenColumn());
@@ -340,12 +546,15 @@ namespace SqlParser.SyntaxAnalyser
             if(!CheckToken(TokenType.Id))
                 throw new IdExpectedException(GetTokenRow(), GetTokenColumn());
 
+            var sourceTable = new IdNode(_currenToken.Lexeme);
             NextToken();
-            SetUpdate();
-            OptionalSelection();
+            var updates = SetUpdate();
+            var selection = OptionalSelection();
+
+            return new UpdateNode{SourceTable = sourceTable, Updates = updates, Selection = selection};
         }
 
-        private void SetUpdate()
+        private List<SetUpdateNode> SetUpdate()
         {
             if (!CheckToken(TokenType.RwSet))
                 throw new SetKeywordExpectedException(GetTokenRow(), GetTokenColumn());
@@ -354,16 +563,21 @@ namespace SqlParser.SyntaxAnalyser
             if(!CheckToken(TokenType.Id))
                 throw new IdExpectedException(GetTokenRow(), GetTokenColumn());
             
+            var column = new IdNode(_currenToken.Lexeme);
             NextToken();
             if (!CheckToken(TokenType.OpEqual))
                 throw new EqualOperatorExpectedException(GetTokenRow(), GetTokenColumn());
 
             NextToken();
-            Literal();
-            SetUpdatePrime();
+            var value = Literal();
+            var update = new SetUpdateNode{Column = column, Value = value};
+            var updates = SetUpdatePrime();
+            updates.Insert(0, update);
+
+            return updates;
         }
 
-        private void SetUpdatePrime()
+        private List<SetUpdateNode> SetUpdatePrime()
         {
             if (CheckToken(TokenType.Comma))
             {
@@ -371,21 +585,24 @@ namespace SqlParser.SyntaxAnalyser
                 if(!CheckToken(TokenType.Id))
                     throw new IdExpectedException(GetTokenRow(), GetTokenColumn());
 
+                var column = new IdNode(_currenToken.Lexeme);
                 NextToken();
                 if(!CheckToken(TokenType.OpEqual))
                     throw new EqualOperatorExpectedException(GetTokenRow(), GetTokenColumn());
 
                 NextToken();
-                Literal();
-                SetUpdatePrime();
+                var value = Literal();
+                var update = new SetUpdateNode{Column = column, Value = value};
+                var updates = SetUpdatePrime();
+                updates.Insert(0, update);
+
+                return updates;
             }
-            else
-            {
-                //Epsilon
-            }
+
+            return new List<SetUpdateNode>();
         }
 
-        private void DeleteTable()
+        private DeleteNode DeleteTable()
         {
             if (!CheckToken(TokenType.RwDelete))
                 throw new DeleteKeywordExpectedException(GetTokenRow(), GetTokenColumn());
@@ -398,8 +615,11 @@ namespace SqlParser.SyntaxAnalyser
             if(!CheckToken(TokenType.Id))
                 throw new IdExpectedException(GetTokenRow(), GetTokenColumn());
 
+            var sourceTable = new IdNode(_currenToken.Lexeme);
             NextToken();
-            OptionalSelection();
+            ConditionalExpressionNode selection = OptionalSelection();
+
+            return new DeleteNode{SourceTable = sourceTable, Selection = selection};
         }
 
         private void NextToken()

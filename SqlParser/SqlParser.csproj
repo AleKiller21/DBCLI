@@ -44,6 +44,33 @@
     <Compile Include="Lexer.cs" />
     <Compile Include="LexerException.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SyntaxAnalyser\Nodes\StatementNodes\CreateNodes\CreateDatabaseNode.cs" />
+    <Compile Include="SyntaxAnalyser\Nodes\StatementNodes\CreateNodes\CreateObjectNode.cs" />
+    <Compile Include="SyntaxAnalyser\Nodes\StatementNodes\CreateNodes\UnitSize.cs" />
+    <Compile Include="SyntaxAnalyser\Nodes\StatementNodes\DropNodes\DropDatabaseNode.cs" />
+    <Compile Include="SyntaxAnalyser\Nodes\StatementNodes\DropNodes\DropObjectNode.cs" />
+    <Compile Include="SyntaxAnalyser\Nodes\StatementNodes\DropNodes\DropTableNode.cs" />
+    <Compile Include="SyntaxAnalyser\Nodes\TypeNodes\DoubleTypeNode.cs" />
+    <Compile Include="SyntaxAnalyser\Nodes\ExpressionNodes\AndExpressionNode.cs" />
+    <Compile Include="SyntaxAnalyser\Nodes\ExpressionNodes\ConditionalExpressionNode.cs" />
+    <Compile Include="SyntaxAnalyser\Nodes\ConditionalNode.cs" />
+    <Compile Include="SyntaxAnalyser\Nodes\ExpressionNodes\OrExpressionNode.cs" />
+    <Compile Include="SyntaxAnalyser\Nodes\ExpressionNodes\UnaryExpressionNode.cs" />
+    <Compile Include="SyntaxAnalyser\Nodes\TypeNodes\IntTypeNode.cs" />
+    <Compile Include="SyntaxAnalyser\Nodes\Operators\EqualOperatorNode.cs" />
+    <Compile Include="SyntaxAnalyser\Nodes\Operators\GreaterThanOperatorNode.cs" />
+    <Compile Include="SyntaxAnalyser\Nodes\Operators\GreaterThanOrEqualOperatorNode.cs" />
+    <Compile Include="SyntaxAnalyser\Nodes\Operators\LessThanOperatorNode.cs" />
+    <Compile Include="SyntaxAnalyser\Nodes\Operators\LessThanOrEqualOperatorNode.cs" />
+    <Compile Include="SyntaxAnalyser\Nodes\Operators\NotEqualOperatorNode.cs" />
+    <Compile Include="SyntaxAnalyser\Nodes\StatementNodes\CreateNodes\ColumnNode.cs" />
+    <Compile Include="SyntaxAnalyser\Nodes\StatementNodes\CreateNodes\CreateTableNode.cs" />
+    <Compile Include="SyntaxAnalyser\Nodes\StatementNodes\CreateNodes\InsertNode.cs" />
+    <Compile Include="SyntaxAnalyser\Nodes\TypeNodes\StringTypeNode.cs" />
+    <Compile Include="SyntaxAnalyser\Nodes\TypeNodes\TypeNode.cs" />
+    <Compile Include="SyntaxAnalyser\Nodes\StatementNodes\CreateNodes\ValueNode.cs" />
+    <Compile Include="SyntaxAnalyser\Nodes\StatementNodes\DeleteNodes\DeleteNode.cs" />
+    <Compile Include="SyntaxAnalyser\Nodes\LiteralNodes\DoubleNode.cs" />
     <Compile Include="SyntaxAnalyser\Exceptions\DeleteKeywordExpectedException.cs" />
     <Compile Include="SyntaxAnalyser\Exceptions\EqualOperatorExpectedException.cs" />
     <Compile Include="SyntaxAnalyser\Exceptions\DropKeywordExpectedException.cs" />
@@ -56,14 +83,23 @@
     <Compile Include="SyntaxAnalyser\Exceptions\InsertKeywordExpectedException.cs" />
     <Compile Include="SyntaxAnalyser\Exceptions\IntoKeywordExpectedException.cs" />
     <Compile Include="SyntaxAnalyser\Exceptions\FromKeywordExpectedException.cs" />
+    <Compile Include="SyntaxAnalyser\Nodes\IdNode.cs" />
+    <Compile Include="SyntaxAnalyser\Nodes\LiteralNodes\IntNode.cs" />
+    <Compile Include="SyntaxAnalyser\Nodes\LiteralNodes\LiteralNode.cs" />
+    <Compile Include="SyntaxAnalyser\Nodes\StatementNodes\UpdateNodes\SetUpdateNode.cs" />
+    <Compile Include="SyntaxAnalyser\Nodes\StatementNodes\SelectNodes\SelectNode.cs" />
+    <Compile Include="SyntaxAnalyser\StatementNode.cs" />
     <Compile Include="SyntaxAnalyser\Parser.cs" />
     <Compile Include="SyntaxAnalyser\Exceptions\ParserException.cs" />
     <Compile Include="SyntaxAnalyser\Exceptions\ValuesKeywordExpectedException.cs" />
     <Compile Include="SyntaxAnalyser\Exceptions\SelectKeywordExpectedException.cs" />
     <Compile Include="SyntaxAnalyser\Exceptions\UpdateKeywordExpectedException.cs" />
     <Compile Include="SyntaxAnalyser\Exceptions\SetKeywordExpectedException.cs" />
+    <Compile Include="SyntaxAnalyser\Nodes\LiteralNodes\StringNode.cs" />
+    <Compile Include="SyntaxAnalyser\Nodes\StatementNodes\UpdateNodes\UpdateNode.cs" />
     <Compile Include="Token.cs" />
     <Compile Include="TokenType.cs" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

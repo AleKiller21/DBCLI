@@ -7,7 +7,7 @@ namespace DB2CLI
     {
         static void Main(string[] args)
         {
-            var parser = new Parser(";".ToLower());
+            var parser = new Parser("update sample set age = 25 where id = 5 and name = \"jack\";".ToLower());
             parser.Parse();
             Console.WriteLine("SUCCESS!!");
         }
