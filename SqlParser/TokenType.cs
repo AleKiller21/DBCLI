@@ -6,6 +6,8 @@
         LiteralString,
         LiteralInt,
         LiteralDouble,
+        RwConnect,
+        RwDisconnect,
         RwCreate,
         RwDrop,
         RwInsert,

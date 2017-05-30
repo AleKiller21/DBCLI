@@ -44,6 +44,9 @@
     <Compile Include="Lexer.cs" />
     <Compile Include="LexerException.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SyntaxAnalyser\Nodes\StatementNodes\DatabaseConnectionNodes\ConnectDatabaseNode.cs" />
+    <Compile Include="SyntaxAnalyser\Nodes\StatementNodes\DatabaseConnectionNodes\ConnectionNode.cs" />
+    <Compile Include="SyntaxAnalyser\Nodes\StatementNodes\DatabaseConnectionNodes\DisconnectDatabaseNode.cs" />
     <Compile Include="SyntaxAnalyser\Nodes\StatementNodes\CreateNodes\CreateDatabaseNode.cs" />
     <Compile Include="SyntaxAnalyser\Nodes\StatementNodes\CreateNodes\CreateObjectNode.cs" />
     <Compile Include="SyntaxAnalyser\Nodes\StatementNodes\CreateNodes\UnitSize.cs" />

@@ -12,6 +12,7 @@ using SqlParser.SyntaxAnalyser.Nodes.LiteralNodes;
 using SqlParser.SyntaxAnalyser.Nodes.Operators;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.CreateNodes;
+using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.DatabaseConnectionNodes;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.DeleteNodes;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.DropNodes;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.SelectNodes;
@@ -49,6 +50,8 @@ namespace SqlParser.SyntaxAnalyser
 
         private StatementNode StatementName()
         {
+            if (CheckToken(TokenType.RwConnect)) return ConnectDatabase();
+            if (CheckToken(TokenType.RwDisconnect)) return DisconnectDatabase();
             if (CheckToken(TokenType.RwCreate)) return CreateObject();
             if (CheckToken(TokenType.RwDrop)) return DropObject();
             if (CheckToken(TokenType.RwInsert)) return InsertTable();
@@ -57,6 +60,38 @@ namespace SqlParser.SyntaxAnalyser
             if (CheckToken(TokenType.RwDelete)) return DeleteTable();
 
             throw new ParserException($"Unexpected token encountered at row {GetTokenRow()} column {GetTokenColumn()}.");
+        }
+
+        private ConnectionNode DisconnectDatabase()
+        {
+            if(!CheckToken(TokenType.RwDisconnect))
+                throw new ParserException($"'disconnect' keyword expected at row {GetTokenRow()} column {GetTokenColumn()}.");
+
+            NextToken();
+
+            if (!CheckToken(TokenType.Id))
+                throw new IdExpectedException(GetTokenRow(), GetTokenColumn());
+
+            var databaseName = new IdNode(_currenToken.Lexeme);
+            NextToken();
+
+            return new DisconnectDatabaseNode{DatabaseName = databaseName};
+        }
+
+        private ConnectionNode ConnectDatabase()
+        {
+            if (!CheckToken(TokenType.RwConnect))
+                throw new ParserException($"'connect' keyword expected at row {GetTokenRow()} column {GetTokenColumn()}.");
+
+            NextToken();
+
+            if (!CheckToken(TokenType.Id))
+                throw new IdExpectedException(GetTokenRow(), GetTokenColumn());
+
+            var databaseName = new IdNode(_currenToken.Lexeme);
+            NextToken();
+
+            return new ConnectDatabaseNode() { DatabaseName = databaseName };
         }
 
         private CreateObjectNode CreateObject()

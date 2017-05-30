@@ -170,28 +170,32 @@ namespace SqlParser
 
         private void InitReservedWordsDictionary()
         {
-            _reservedWords = new Dictionary<string, TokenType>();
+            _reservedWords = new Dictionary<string, TokenType>
+            {
+                {"connect", TokenType.RwConnect},
+                {"disconnect", TokenType.RwDisconnect},
+                {"create", TokenType.RwCreate},
+                {"drop", TokenType.RwDrop},
+                {"insert", TokenType.RwInsert},
+                {"select", TokenType.RwSelect},
+                {"update", TokenType.RwUpdate},
+                {"delete", TokenType.RwDelete},
+                {"into", TokenType.RwInto},
+                {"values", TokenType.RwValues},
+                {"from", TokenType.RwFrom},
+                {"set", TokenType.RwSet},
+                {"where", TokenType.RwWhere},
+                {"database", TokenType.RwDatabase},
+                {"table", TokenType.RwDatabase},
+                {"and", TokenType.RwAnd},
+                {"or", TokenType.RwOr},
+                {"mb", TokenType.RwMb},
+                {"gb", TokenType.RwGb},
+                {"int", TokenType.RwInt},
+                {"double", TokenType.RwDouble},
+                {"char", TokenType.RwChar}
+            };
 
-            _reservedWords.Add("create", TokenType.RwCreate);
-            _reservedWords.Add("drop", TokenType.RwDrop);
-            _reservedWords.Add("insert", TokenType.RwInsert);
-            _reservedWords.Add("select", TokenType.RwSelect);
-            _reservedWords.Add("update", TokenType.RwUpdate);
-            _reservedWords.Add("delete", TokenType.RwDelete);
-            _reservedWords.Add("into", TokenType.RwInto);
-            _reservedWords.Add("values", TokenType.RwValues);
-            _reservedWords.Add("from", TokenType.RwFrom);
-            _reservedWords.Add("set", TokenType.RwSet);
-            _reservedWords.Add("where", TokenType.RwWhere);
-            _reservedWords.Add("database", TokenType.RwDatabase);
-            _reservedWords.Add("table", TokenType.RwDatabase);
-            _reservedWords.Add("and", TokenType.RwAnd);
-            _reservedWords.Add("or", TokenType.RwOr);
-            _reservedWords.Add("mb", TokenType.RwMb);
-            _reservedWords.Add("gb", TokenType.RwGb);
-            _reservedWords.Add("int", TokenType.RwInt);
-            _reservedWords.Add("double", TokenType.RwDouble);
-            _reservedWords.Add("char", TokenType.RwChar);
         }
     }
 }
