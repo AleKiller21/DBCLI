@@ -7,7 +7,7 @@ namespace DB2CLI
     {
         static void Main(string[] args)
         {
-            var parser = new Parser("disconnects bludb;".ToLower());
+            var parser = new Parser("update employee set salary = 5600.25 where name = \"Alejandro\" and id = 5;".ToLower());
             parser.Parse();
             Console.WriteLine("SUCCESS!!");
         }

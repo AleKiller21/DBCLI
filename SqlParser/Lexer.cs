@@ -132,7 +132,25 @@ namespace SqlParser
                 _currentSymbol = GetNextSymbol();
             }
 
+            if (_currentSymbol == '.') return GetDoubleToken(lexeme, row, col);
+
             return new Token(lexeme.ToString(), TokenType.LiteralInt, row, col);
+        }
+
+        private Token GetDoubleToken(StringBuilder lexeme, int row, int col)
+        {
+            lexeme.Append(_currentSymbol);
+            _currentSymbol = GetNextSymbol();
+
+            if(!char.IsDigit(_currentSymbol)) throw new LexerException($"Unrecognized token found at row {row} column {col}. Double token expected.");
+
+            while (char.IsDigit(_currentSymbol))
+            {
+                lexeme.Append(_currentSymbol);
+                _currentSymbol = GetNextSymbol();
+            }
+
+            return new Token(lexeme.ToString(), TokenType.LiteralDouble, row, col);
         }
 
         private char GetNextSymbol()
