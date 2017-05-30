@@ -1,4 +1,6 @@
-﻿namespace SqlParser.SyntaxAnalyser.Nodes.LiteralNodes
+﻿using System.Text.RegularExpressions;
+
+namespace SqlParser.SyntaxAnalyser.Nodes.LiteralNodes
 {
     public class StringNode : LiteralNode
     {
@@ -6,7 +8,7 @@
 
         public StringNode(string value)
         {
-            _value = value;
+            _value = Regex.Replace(value, "\"", string.Empty); ;
         }
 
         public override dynamic Evaluate()

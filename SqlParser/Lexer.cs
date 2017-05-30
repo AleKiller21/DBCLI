@@ -120,7 +120,6 @@ namespace SqlParser
 
         private Token GetNumToken()
         {
-            //TODO accept double literals
             var lexeme = new StringBuilder(_currentSymbol + "");
             var row = _row;
             var col = _col;

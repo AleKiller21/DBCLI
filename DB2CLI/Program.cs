@@ -7,7 +7,7 @@ namespace DB2CLI
     {
         static void Main(string[] args)
         {
-            var parser = new Parser("update employee set salary = 5600.25 where name = \"Alejandro\" and id = 5;".ToLower());
+            var parser = new Parser("create database \"C:\\temp\\sample.db\" 4096 mb;".ToLower());
             parser.Parse();
             Console.WriteLine("SUCCESS!!");
         }
