@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 using DBCLICore;
 using SqlParser.SyntaxAnalyser;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.CreateNodes;

@@ -11,7 +11,7 @@ namespace DBCLICore
         private const string Path = "..\\Databases\\";
         private const int BufferSize = 1024;
 
-        public static void CreateDatabase(string name, long size, UnitSize unit)
+        public static void CreateDatabase(string name, long size, UnitSize unit, FileDatabaseStructures structures)
         {
             size = ConvertToBytes(size, unit);
 

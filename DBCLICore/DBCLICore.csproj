@@ -42,6 +42,8 @@
   <ItemGroup>
     <Compile Include="Database.cs" />
     <Compile Include="FileDatabase.cs" />
+    <Compile Include="FileDatabaseStructures.cs" />
+    <Compile Include="Models\ColumnMetadata.cs" />
     <Compile Include="Models\DirectoryEntry.cs" />
     <Compile Include="Models\Inode.cs" />
     <Compile Include="Models\SuperBlock.cs" />
