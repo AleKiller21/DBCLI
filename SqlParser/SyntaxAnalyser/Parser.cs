@@ -1,16 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.Remoting.Messaging;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml;
+﻿using System.Collections.Generic;
 using SqlParser.SyntaxAnalyser.Exceptions;
 using SqlParser.SyntaxAnalyser.Nodes;
 using SqlParser.SyntaxAnalyser.Nodes.ExpressionNodes;
 using SqlParser.SyntaxAnalyser.Nodes.LiteralNodes;
 using SqlParser.SyntaxAnalyser.Nodes.Operators;
-using SqlParser.SyntaxAnalyser.Nodes.StatementNodes;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.CreateNodes;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.DatabaseConnectionNodes;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.DeleteNodes;

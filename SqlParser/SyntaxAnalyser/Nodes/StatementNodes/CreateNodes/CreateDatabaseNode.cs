@@ -10,7 +10,7 @@ namespace SqlParser.SyntaxAnalyser.Nodes.StatementNodes.CreateNodes
     public class CreateDatabaseNode : CreateObjectNode
     {
         public UnitSize Unit;
-        public int Size;
+        public long Size;
         public StringNode Path;
 
         public CreateDatabaseNode(StringNode path, UnitSize unit, int size)

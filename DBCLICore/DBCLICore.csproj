@@ -4,16 +4,15 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{864108CE-6B0E-474C-B3C1-06B6C4E187CD}</ProjectGuid>
-    <OutputType>Exe</OutputType>
-    <RootNamespace>DB2CLI</RootNamespace>
-    <AssemblyName>DB2CLI</AssemblyName>
+    <ProjectGuid>{5C0755BF-A8C4-43F8-A26C-95EF6EBE9809}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>DBCLICore</RootNamespace>
+    <AssemblyName>DBCLICore</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -23,7 +22,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -42,17 +40,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Program.cs" />
+    <Compile Include="Database.cs" />
+    <Compile Include="FileDatabase.cs" />
+    <Compile Include="Models\DirectoryEntry.cs" />
+    <Compile Include="Models\Inode.cs" />
+    <Compile Include="Models\SuperBlock.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Table.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\DBCLICore\DBCLICore.csproj">
-      <Project>{5c0755bf-a8c4-43f8-a26c-95ef6ebe9809}</Project>
-      <Name>DBCLICore</Name>
-    </ProjectReference>
     <ProjectReference Include="..\SqlParser\SqlParser.csproj">
       <Project>{e860c240-8ffb-4133-94c8-3c359ccbc555}</Project>
       <Name>SqlParser</Name>

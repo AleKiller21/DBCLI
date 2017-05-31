@@ -1,5 +1,7 @@
 ﻿using System;
+using DBCLICore;
 using SqlParser.SyntaxAnalyser;
+using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.CreateNodes;
 
 namespace DB2CLI
 {
@@ -7,9 +9,9 @@ namespace DB2CLI
     {
         static void Main(string[] args)
         {
-            var parser = new Parser("create database \"C:\\temp\\sample.db\" 4096 mb;".ToLower());
-            parser.Parse();
-            Console.WriteLine("SUCCESS!!");
+            var parser = new Parser("create database jack 50 mb;".ToLower());
+            var fileDatabase = new FileDatabase();
+            fileDatabase.CreateDatabase(parser.Parse() as CreateDatabaseNode);
         }
     }
 }
