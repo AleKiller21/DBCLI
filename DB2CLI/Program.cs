@@ -2,6 +2,7 @@
 using DBCLICore;
 using SqlParser.SyntaxAnalyser;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.CreateNodes;
+using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.DropNodes;
 
 namespace DB2CLI
 {
@@ -9,9 +10,10 @@ namespace DB2CLI
     {
         static void Main(string[] args)
         {
-            var parser = new Parser("create database jack 50 mb;".ToLower());
+            var query = "drop database jack;";
+            var parser = new Parser(query.ToLower());
             var fileDatabase = new FileDatabase();
-            fileDatabase.CreateDatabase(parser.Parse() as CreateDatabaseNode);
+            fileDatabase.DropDatabase(parser.Parse() as DropDatabaseNode);
         }
     }
 }

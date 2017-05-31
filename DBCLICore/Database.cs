@@ -11,7 +11,7 @@ namespace DBCLICore
         private const string Path = "..\\Databases\\";
         private const int BufferSize = 1024;
 
-        public void CreateDatabase(string name, long size, UnitSize unit)
+        public static void CreateDatabase(string name, long size, UnitSize unit)
         {
             size = ConvertToBytes(size, unit);
 
@@ -34,14 +34,28 @@ namespace DBCLICore
             Console.WriteLine($"{name} database has been created successfully.");
         }
 
-        private long ConvertToBytes(long size, UnitSize unit)
+        public static void DropDatabase(string name)
+        {
+            try
+            {
+                File.Delete(Path + name + ".db");
+                Console.WriteLine($"{name} database has been deleted.");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
+        }
+
+        private static long ConvertToBytes(long size, UnitSize unit)
         {
             size *= 1024;
             if (unit == UnitSize.Mb) return size;
             return size * 1024;
         }
 
-        private bool CheckIfSizeDivisibleByTwo(long size)
+        private static bool CheckIfSizeDivisibleByTwo(long size)
         {
             return size % 2 == 0;
         }
