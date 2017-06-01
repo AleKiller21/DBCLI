@@ -49,7 +49,7 @@ namespace DBCLICore
             {
                 _currentDatabase = GetQualifiedName(name);
 
-                var structures = _reader.ConnectDatabase(GetQualifiedName(name));
+                var structures = _reader.ConnectDatabase(_currentDatabase);
                 _connection = true;
                 return structures;
             }

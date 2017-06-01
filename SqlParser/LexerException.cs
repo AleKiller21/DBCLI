@@ -2,7 +2,7 @@
 
 namespace SqlParser
 {
-    internal class LexerException : Exception
+    public class LexerException : Exception
     {
         public LexerException()
         {

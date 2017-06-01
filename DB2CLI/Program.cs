@@ -16,6 +16,8 @@ namespace DB2CLI
             //var parser = new Parser(query.ToLower());
             //var fileDatabase = new FileDatabase();
             //fileDatabase.ConnectDatabase(parser.Parse() as ConnectionNode);
+            var cli = new CLI();
+            cli.Start();
         }
     }
 }
