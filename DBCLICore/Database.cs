@@ -34,6 +34,7 @@ namespace DBCLICore
 
             try
             {
+                //TODO Send blockSize as user input
                 _writer.CreateDatabase(GetQualifiedName(name), size, 512);
                 Console.WriteLine($"{name} database has been created successfully.");
             }
@@ -59,6 +60,8 @@ namespace DBCLICore
                 return null;
             }
         }
+
+        //TODO Disconnect method
 
         public void DropDatabase(string name)
         {

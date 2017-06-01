@@ -25,6 +25,8 @@ namespace DBCLICore
                 }
 
                 var structures = new FileDatabaseStructures { Super = new SuperBlock(size, 512) };
+
+                _writer.Seek(0, SeekOrigin.Begin);
                 WriteStructuresToDisk(structures);
             }
         }
@@ -32,12 +34,35 @@ namespace DBCLICore
         private void WriteStructuresToDisk(FileDatabaseStructures structures)
         {
             WriteSuperBlock(structures.Super);
+            WriteBitMap(structures);
+        }
+
+        private void WriteBitMap(FileDatabaseStructures structures)
+        {
+            structures.BitMap = new byte[structures.Super.BitmapSize];
+            var blockCounter = 0;
+            const byte msb = 128;
+
+            for (var i = 0; i < structures.Super.BitmapSize; i++)
+            {
+                var word = Byte.MaxValue;
+
+                for (byte bit = 0; bit < sizeof(byte) * 8; bit++)
+                {
+                    if (blockCounter == structures.Super.FirstDataBlock) break;
+                    word ^= (byte) (msb >> bit);
+                    blockCounter++;
+                }
+
+                structures.BitMap[i] = word;
+            }
+
+            _writer.Write(structures.BitMap);
+            _writer.Seek(structures.Super.DirectoryBlock * structures.Super.BlockSize, SeekOrigin.Begin);
         }
 
         private void WriteSuperBlock(SuperBlock super)
         {
-            _writer.Seek(0, SeekOrigin.Begin);
-
             _writer.Write(super.TotalBlocks);
             _writer.Write(super.FreeBlocks);
             _writer.Write(super.UsedBlocks);
@@ -45,7 +70,6 @@ namespace DBCLICore
             _writer.Write(super.BytesAvailablePerBlock);
             _writer.Write(super.BitmapSize);
             _writer.Write(super.DirectorySize);
-            _writer.Write(super.WordsInBitmap);
             _writer.Write(super.DatabaseSize);
             _writer.Write(super.TotalInodes);
             _writer.Write(super.FreeInodes);
@@ -54,6 +78,8 @@ namespace DBCLICore
             _writer.Write(super.InodeTableBlock);
             _writer.Write(super.FirstDataBlock);
             _writer.Write(super.InodeTableSize);
+
+            _writer.Seek(super.BitmapBlock * super.BlockSize, SeekOrigin.Begin);
         }
     }
 }

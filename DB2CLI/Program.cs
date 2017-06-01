@@ -12,12 +12,10 @@ namespace DB2CLI
     {
         static void Main(string[] args)
         {
-            //var query = "connect sample;";
-            //var parser = new Parser(query.ToLower());
-            //var fileDatabase = new FileDatabase();
-            //fileDatabase.ConnectDatabase(parser.Parse() as ConnectionNode);
             var cli = new CLI();
             cli.Start();
+            //var x = UInt32.MaxValue << 32;
+            //Console.WriteLine(x);
         }
     }
 }

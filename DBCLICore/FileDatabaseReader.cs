@@ -19,10 +19,10 @@ namespace DBCLICore
 
             using (_reader = new BinaryReader(File.Open(_path, FileMode.Open)))
             {
-                return new FileDatabaseStructures
-                {
-                    Super = ReadSuperBlock()
-                };
+                var structures = new FileDatabaseStructures { Super = ReadSuperBlock() };
+                structures.BitMap = ReadBitmap(structures.Super);
+
+                return structures;
             }
         }
 
@@ -35,7 +35,6 @@ namespace DBCLICore
             var bytesAvailablePerBlock = _reader.ReadInt32();
             var bitmapSize = _reader.ReadInt32();
             var directorySize = _reader.ReadInt32();
-            var wordsInBitmap = _reader.ReadInt32();
             var databaseSize = _reader.ReadInt64();
             var totalInodes = _reader.ReadInt32();
             var freeInodes = _reader.ReadInt32();
@@ -61,12 +60,16 @@ namespace DBCLICore
                 BitmapBlock = bitmapBlock,
                 FreeBlocks = freeBlocks,
                 BytesAvailablePerBlock = bytesAvailablePerBlock,
-                WordsInBitmap = wordsInBitmap,
                 FreeInodes = freeInodes
             };
         }
 
-        //TODO ReadBitmap()
+        private byte[] ReadBitmap(SuperBlock super)
+        {
+            _reader.BaseStream.Position = super.BitmapBlock * super.BlockSize;
+            return _reader.ReadBytes(super.BitmapSize);
+        }
+        
         //TODO ReadDirectory()
         //TODO ReadInodesTable()
     }

@@ -13,7 +13,6 @@ namespace DBCLICore.Models
         public int BytesAvailablePerBlock;
         public int BitmapSize;
         public int DirectorySize;
-        public int WordsInBitmap;
         public long DatabaseSize;
         public int TotalInodes;
         public int FreeInodes;
@@ -38,7 +37,6 @@ namespace DBCLICore.Models
             FreeInodes = TotalInodes;
             BitmapBlock = 1;
             BitmapSize = TotalBlocks / 8;
-            WordsInBitmap = BitmapSize / sizeof(int);
             DirectorySize = TotalInodes * DirectoryEntry.Size();
             InodeTableSize = TotalInodes * Inode.Size();
             DirectoryBlock = (int)Math.Ceiling(BitmapSize / (double)BlockSize + BitmapBlock);
