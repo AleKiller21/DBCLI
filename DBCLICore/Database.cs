@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using DBCLICore.Models;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.CreateNodes;
 
 namespace DBCLICore
@@ -9,55 +10,90 @@ namespace DBCLICore
     public class Database
     {
         private const string Path = "..\\Databases\\";
-        private const int BufferSize = 1024;
+        private string _currentDatabase;
+        private bool _connection;
+        private readonly FileDatabaseWriter _writer;
+        private readonly FileDatabaseReader _reader;
 
-        public static void CreateDatabase(string name, long size, UnitSize unit, FileDatabaseStructures structures)
+        public Database()
+        {
+            _connection = false;
+            _writer = new FileDatabaseWriter();
+            _reader = new FileDatabaseReader();
+        }
+
+        public void CreateDatabase(string name, long size, UnitSize unit)
         {
             size = ConvertToBytes(size, unit);
 
             if (!CheckIfSizeDivisibleByTwo(size))
             {
-                Console.WriteLine("Invalid size. Size must be divisible by 2.");
+                Console.WriteLine("Invalid size. Must be divisible by 2.");
                 return;
             }
 
-            var buffer = new byte[BufferSize];
-
-            using (var writer = new BinaryWriter(File.Open(Path + name + ".db", FileMode.CreateNew)))
+            try
             {
-                for (long i = 0; i < size; i += BufferSize)
-                {
-                    writer.Write(buffer);
-                }
+                _writer.CreateDatabase(GetQualifiedName(name), size, 512);
+                Console.WriteLine($"{name} database has been created successfully.");
             }
-
-            Console.WriteLine($"{name} database has been created successfully.");
+            catch (Exception e)
+            {
+                Console.WriteLine("An error has occurred.\n" + e);
+            }
         }
 
-        public static void DropDatabase(string name)
+        public FileDatabaseStructures ConnectDatabase(string name)
         {
             try
             {
-                File.Delete(Path + name + ".db");
+                _currentDatabase = GetQualifiedName(name);
+
+                var structures = _reader.ConnectDatabase(GetQualifiedName(name));
+                _connection = true;
+                return structures;
+            }
+            catch (FileNotFoundException e)
+            {
+                Console.WriteLine("No such database exists!");
+                return null;
+            }
+        }
+
+        public void DropDatabase(string name)
+        {
+            if (_connection)
+            {
+                Console.WriteLine("You must disconnect first in order to drop the active database.");
+                return;
+            }
+
+            try
+            {
+                File.Delete(GetQualifiedName(name));
                 Console.WriteLine($"{name} database has been deleted.");
             }
             catch (Exception e)
             {
                 Console.WriteLine(e);
-                throw;
             }
         }
 
-        private static long ConvertToBytes(long size, UnitSize unit)
+        private long ConvertToBytes(long size, UnitSize unit)
         {
             size *= 1024;
-            if (unit == UnitSize.Mb) return size;
-            return size * 1024;
+            if (unit == UnitSize.Mb) return size * 1024;
+            return size * 1024 * 1024;
         }
 
-        private static bool CheckIfSizeDivisibleByTwo(long size)
+        private bool CheckIfSizeDivisibleByTwo(long size)
         {
             return size % 2 == 0;
+        }
+
+        private string GetQualifiedName(string name)
+        {
+            return Path + name + ".db";
         }
     }
 }

@@ -14,7 +14,7 @@ namespace DBCLICore.Models
         public int BitmapSize;
         public int DirectorySize;
         public int WordsInBitmap;
-        public uint DatabaseSize;
+        public long DatabaseSize;
         public int TotalInodes;
         public int FreeInodes;
         public int BitmapBlock;
@@ -23,7 +23,12 @@ namespace DBCLICore.Models
         public int FirstDataBlock;
         public int InodeTableSize;
 
-        public SuperBlock(uint databaseSize, int blockSize)
+        public SuperBlock()
+        {
+
+        }
+
+        public SuperBlock(long databaseSize, int blockSize)
         {
             DatabaseSize = databaseSize;
             BlockSize = blockSize;
@@ -39,6 +44,8 @@ namespace DBCLICore.Models
             DirectoryBlock = (int)Math.Ceiling(BitmapSize / (double)BlockSize + BitmapBlock);
             InodeTableBlock = (int)Math.Ceiling(DirectorySize / (double)BlockSize) + DirectoryBlock;
             FirstDataBlock = InodeTableBlock + (int) Math.Ceiling((double) InodeTableSize / BlockSize);
+            UsedBlocks = FirstDataBlock;
+            FreeBlocks = TotalBlocks - UsedBlocks;
         }
     }
 }

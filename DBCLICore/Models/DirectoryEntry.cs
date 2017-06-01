@@ -20,7 +20,7 @@ namespace DBCLICore.Models
 
         public static int Size()
         {
-            return sizeof(int) + sizeof(bool) + NameSize;
+            return sizeof(int) + sizeof(bool) + NameSize * sizeof(char);
         }
     }
 }
