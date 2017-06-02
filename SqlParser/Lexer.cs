@@ -203,7 +203,7 @@ namespace SqlParser
                 {"set", TokenType.RwSet},
                 {"where", TokenType.RwWhere},
                 {"database", TokenType.RwDatabase},
-                {"table", TokenType.RwDatabase},
+                {"table", TokenType.RwTable},
                 {"and", TokenType.RwAnd},
                 {"or", TokenType.RwOr},
                 {"mb", TokenType.RwMb},

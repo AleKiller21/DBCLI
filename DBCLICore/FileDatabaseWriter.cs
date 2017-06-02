@@ -24,76 +24,77 @@ namespace DBCLICore
                     _writer.Write(buffer);
                 }
 
-                var structures = new FileDatabaseStructures { Super = new SuperBlock(size) };
+                Disk.Structures = new FileDatabaseStructures { Super = new SuperBlock(size) };
 
                 _writer.Seek(0, SeekOrigin.Begin);
-                WriteStructuresToDisk(structures);
+                WriteStructuresToDisk();
+                Disk.Structures = null;
             }
         }
 
-        private void WriteStructuresToDisk(FileDatabaseStructures structures)
+        private void WriteStructuresToDisk()
         {
-            WriteSuperBlock(structures.Super);
-            WriteBitMap(structures);
-            WriteDirectory(structures);
-            WriteInodeTable(structures);
+            WriteSuperBlock();
+            WriteBitMap();
+            WriteDirectory();
+            WriteInodeTable();
         }
 
-        private void WriteSuperBlock(SuperBlock super)
+        private void WriteSuperBlock()
         {
-            _writer.Write(super.TotalBlocks);
-            _writer.Write(super.FreeBlocks);
-            _writer.Write(super.UsedBlocks);
-            _writer.Write(super.BlockSize);
-            _writer.Write(super.BytesAvailablePerBlock);
-            _writer.Write(super.BitmapSize);
-            _writer.Write(super.DirectorySize);
-            _writer.Write(super.DatabaseSize);
-            _writer.Write(super.TotalInodes);
-            _writer.Write(super.FreeInodes);
-            _writer.Write(super.BitmapBlock);
-            _writer.Write(super.DirectoryBlock);
-            _writer.Write(super.InodeTableBlock);
-            _writer.Write(super.FirstDataBlock);
-            _writer.Write(super.InodeTableSize);
+            _writer.Write(Disk.Structures.Super.TotalBlocks);
+            _writer.Write(Disk.Structures.Super.FreeBlocks);
+            _writer.Write(Disk.Structures.Super.UsedBlocks);
+            _writer.Write(Disk.Structures.Super.BlockSize);
+            _writer.Write(Disk.Structures.Super.BytesAvailablePerBlock);
+            _writer.Write(Disk.Structures.Super.BitmapSize);
+            _writer.Write(Disk.Structures.Super.DirectorySize);
+            _writer.Write(Disk.Structures.Super.DatabaseSize);
+            _writer.Write(Disk.Structures.Super.TotalInodes);
+            _writer.Write(Disk.Structures.Super.FreeInodes);
+            _writer.Write(Disk.Structures.Super.BitmapBlock);
+            _writer.Write(Disk.Structures.Super.DirectoryBlock);
+            _writer.Write(Disk.Structures.Super.InodeTableBlock);
+            _writer.Write(Disk.Structures.Super.FirstDataBlock);
+            _writer.Write(Disk.Structures.Super.InodeTableSize);
         }
 
-        private void WriteBitMap(FileDatabaseStructures structures)
+        private void WriteBitMap()
         {
-            _writer.Seek(structures.Super.BitmapBlock * structures.Super.BlockSize, SeekOrigin.Begin);
+            _writer.Seek(Disk.Structures.Super.BitmapBlock * Disk.Structures.Super.BlockSize, SeekOrigin.Begin);
 
-            structures.BitMap = new byte[structures.Super.BitmapSize];
+            Disk.Structures.BitMap = new byte[Disk.Structures.Super.BitmapSize];
             var blockCounter = 0;
             const byte msb = 128;
 
-            for (var i = 0; i < structures.Super.BitmapSize; i++)
+            for (var i = 0; i < Disk.Structures.Super.BitmapSize; i++)
             {
                 var word = Byte.MaxValue;
 
                 for (byte bit = 0; bit < sizeof(byte) * 8; bit++)
                 {
-                    if (blockCounter == structures.Super.FirstDataBlock) break;
+                    if (blockCounter == Disk.Structures.Super.FirstDataBlock) break;
                     word ^= (byte) (msb >> bit);
                     blockCounter++;
                 }
 
-                structures.BitMap[i] = word;
+                Disk.Structures.BitMap[i] = word;
             }
 
-            _writer.Write(structures.BitMap);
+            _writer.Write(Disk.Structures.BitMap);
         }
 
-        private void WriteDirectory(FileDatabaseStructures structures)
+        private void WriteDirectory()
         {
-            _writer.Seek(structures.Super.DirectoryBlock * structures.Super.BlockSize, SeekOrigin.Begin);
+            _writer.Seek(Disk.Structures.Super.DirectoryBlock * Disk.Structures.Super.BlockSize, SeekOrigin.Begin);
 
-            structures.Directory = new DirectoryEntry[structures.Super.TotalInodes];
-            for (var i = 0; i < structures.Directory.Length; i++)
+            Disk.Structures.Directory = new DirectoryEntry[Disk.Structures.Super.TotalInodes];
+            for (var i = 0; i < Disk.Structures.Directory.Length; i++)
             {
-                structures.Directory[i] = new DirectoryEntry();
+                Disk.Structures.Directory[i] = new DirectoryEntry();
             }
 
-            foreach (var entry in structures.Directory)
+            foreach (var entry in Disk.Structures.Directory)
             {
                 _writer.Write(entry.Name);
                 _writer.Write(entry.Available);
@@ -101,12 +102,12 @@ namespace DBCLICore
             }
         }
 
-        private void WriteInodeTable(FileDatabaseStructures structures)
+        private void WriteInodeTable()
         {
-            _writer.Seek(structures.Super.InodeTableBlock * structures.Super.BlockSize, SeekOrigin.Begin);
+            _writer.Seek(Disk.Structures.Super.InodeTableBlock * Disk.Structures.Super.BlockSize, SeekOrigin.Begin);
 
-            var inodes = new Inode[structures.Super.TotalInodes];
-            for (var i = 0; i < structures.Super.TotalInodes; i++)
+            var inodes = new Inode[Disk.Structures.Super.TotalInodes];
+            for (var i = 0; i < Disk.Structures.Super.TotalInodes; i++)
             {
                 inodes[i] = new Inode();
 

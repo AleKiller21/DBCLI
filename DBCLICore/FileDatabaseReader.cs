@@ -13,17 +13,15 @@ namespace DBCLICore
         private BinaryReader _reader;
         private string _path;
 
-        public FileDatabaseStructures ConnectDatabase(string name)
+        public void ConnectDatabase(string name)
         {
             _path = name;
             using (_reader = new BinaryReader(File.Open(_path, FileMode.Open)))
             {
-                var structures = new FileDatabaseStructures { Super = ReadSuperBlock() };
-                structures.BitMap = ReadBitmap(structures.Super);
-                structures.Directory = ReadDirectory(structures.Super);
-                structures.Inodes = ReadInodeTable(structures.Super);
-
-                return structures;
+                Disk.Structures = new FileDatabaseStructures { Super = ReadSuperBlock() };
+                Disk.Structures.BitMap = ReadBitmap();
+                Disk.Structures.Directory = ReadDirectory();
+                Disk.Structures.Inodes = ReadInodeTable();
             }
         }
 
@@ -65,18 +63,18 @@ namespace DBCLICore
             };
         }
 
-        private byte[] ReadBitmap(SuperBlock super)
+        private byte[] ReadBitmap()
         {
-            SetReaderPosition(super.BitmapBlock * super.BlockSize);
-            return _reader.ReadBytes(super.BitmapSize);
+            SetReaderPosition(Disk.Structures.Super.BitmapBlock * Disk.Structures.Super.BlockSize);
+            return _reader.ReadBytes(Disk.Structures.Super.BitmapSize);
         }
 
-        private DirectoryEntry[] ReadDirectory(SuperBlock super)
+        private DirectoryEntry[] ReadDirectory()
         {
-            SetReaderPosition(super.DirectoryBlock * super.BlockSize);
-            var entries = new DirectoryEntry[super.TotalInodes];
+            SetReaderPosition(Disk.Structures.Super.DirectoryBlock * Disk.Structures.Super.BlockSize);
+            var entries = new DirectoryEntry[Disk.Structures.Super.TotalInodes];
 
-            for (var i = 0; i < super.TotalInodes; i++)
+            for (var i = 0; i < Disk.Structures.Super.TotalInodes; i++)
             {
                 entries[i] =  new DirectoryEntry
                 {
@@ -89,11 +87,11 @@ namespace DBCLICore
             return entries;
         }
 
-        private Inode[] ReadInodeTable(SuperBlock super)
+        private Inode[] ReadInodeTable()
         {
-            SetReaderPosition(super.InodeTableBlock * super.BlockSize);
+            SetReaderPosition(Disk.Structures.Super.InodeTableBlock * Disk.Structures.Super.BlockSize);
 
-            var inodes = new Inode[super.TotalInodes];
+            var inodes = new Inode[Disk.Structures.Super.TotalInodes];
             for (var i = 0; i < inodes.Length; i++)
             {
                 inodes[i] = new Inode

@@ -41,10 +41,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DatabaseManager.cs" />
+    <Compile Include="Disk.cs" />
     <Compile Include="FileDatabase.cs" />
     <Compile Include="FileDatabaseReader.cs" />
     <Compile Include="FileDatabaseStructures.cs" />
     <Compile Include="FileDatabaseWriter.cs" />
+    <Compile Include="ManagerUtilities.cs" />
     <Compile Include="Models\ColumnMetadata.cs" />
     <Compile Include="Models\DirectoryEntry.cs" />
     <Compile Include="Models\Inode.cs" />
