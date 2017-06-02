@@ -14,8 +14,6 @@ namespace DB2CLI
         {
             var cli = new CLI();
             cli.Start();
-            //var x = UInt32.MaxValue << 32;
-            //Console.WriteLine(x);
         }
     }
 }

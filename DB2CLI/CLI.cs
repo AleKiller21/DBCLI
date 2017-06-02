@@ -5,6 +5,7 @@ using SqlParser.SyntaxAnalyser;
 using SqlParser.SyntaxAnalyser.Exceptions;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.CreateNodes;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.DatabaseConnectionNodes;
+using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.DropNodes;
 
 namespace DB2CLI
 {
@@ -53,6 +54,7 @@ namespace DB2CLI
         {
             if(node is CreateObjectNode) _database.CreateDatabase((CreateDatabaseNode) node);
             else if(node is ConnectionNode) _database.ConnectDatabase((ConnectionNode) node);
+            else if(node is DropObjectNode) _database.DropDatabase((DropDatabaseNode) node);
         }
     }
 }

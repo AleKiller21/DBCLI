@@ -21,6 +21,7 @@ namespace DBCLICore
             {
                 var structures = new FileDatabaseStructures { Super = ReadSuperBlock() };
                 structures.BitMap = ReadBitmap(structures.Super);
+                structures.Directory = ReadDirectory(structures.Super);
 
                 return structures;
             }
@@ -66,11 +67,33 @@ namespace DBCLICore
 
         private byte[] ReadBitmap(SuperBlock super)
         {
-            _reader.BaseStream.Position = super.BitmapBlock * super.BlockSize;
+            SetReaderPosition(super.BitmapBlock * super.BlockSize);
             return _reader.ReadBytes(super.BitmapSize);
         }
-        
-        //TODO ReadDirectory()
+
+        private DirectoryEntry[] ReadDirectory(SuperBlock super)
+        {
+            SetReaderPosition(super.DirectoryBlock * super.BlockSize);
+            var entries = new DirectoryEntry[super.TotalInodes];
+
+            for (var i = 0; i < super.TotalInodes; i++)
+            {
+                entries[i] =  new DirectoryEntry
+                {
+                    Name = _reader.ReadChars(DirectoryEntry.NameSize),
+                    Available = _reader.ReadBoolean(),
+                    Inode = _reader.ReadInt32()
+                };
+            }
+
+            return entries;
+        }
+
+        private void SetReaderPosition(long pos)
+        {
+            _reader.BaseStream.Position = pos;
+        }
+
         //TODO ReadInodesTable()
     }
 }

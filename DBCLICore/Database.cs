@@ -51,7 +51,7 @@ namespace DBCLICore
                 _currentDatabase = GetQualifiedName(name);
 
                 var structures = _reader.ConnectDatabase(_currentDatabase);
-                _connection = true;
+                //_connection = true;
                 return structures;
             }
             catch (FileNotFoundException e)

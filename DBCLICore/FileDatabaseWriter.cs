@@ -35,6 +35,28 @@ namespace DBCLICore
         {
             WriteSuperBlock(structures.Super);
             WriteBitMap(structures);
+            WriteDirectory(structures);
+        }
+
+        private void WriteSuperBlock(SuperBlock super)
+        {
+            _writer.Write(super.TotalBlocks);
+            _writer.Write(super.FreeBlocks);
+            _writer.Write(super.UsedBlocks);
+            _writer.Write(super.BlockSize);
+            _writer.Write(super.BytesAvailablePerBlock);
+            _writer.Write(super.BitmapSize);
+            _writer.Write(super.DirectorySize);
+            _writer.Write(super.DatabaseSize);
+            _writer.Write(super.TotalInodes);
+            _writer.Write(super.FreeInodes);
+            _writer.Write(super.BitmapBlock);
+            _writer.Write(super.DirectoryBlock);
+            _writer.Write(super.InodeTableBlock);
+            _writer.Write(super.FirstDataBlock);
+            _writer.Write(super.InodeTableSize);
+
+            _writer.Seek(super.BitmapBlock * super.BlockSize, SeekOrigin.Begin);
         }
 
         private void WriteBitMap(FileDatabaseStructures structures)
@@ -61,25 +83,22 @@ namespace DBCLICore
             _writer.Seek(structures.Super.DirectoryBlock * structures.Super.BlockSize, SeekOrigin.Begin);
         }
 
-        private void WriteSuperBlock(SuperBlock super)
+        private void WriteDirectory(FileDatabaseStructures structures)
         {
-            _writer.Write(super.TotalBlocks);
-            _writer.Write(super.FreeBlocks);
-            _writer.Write(super.UsedBlocks);
-            _writer.Write(super.BlockSize);
-            _writer.Write(super.BytesAvailablePerBlock);
-            _writer.Write(super.BitmapSize);
-            _writer.Write(super.DirectorySize);
-            _writer.Write(super.DatabaseSize);
-            _writer.Write(super.TotalInodes);
-            _writer.Write(super.FreeInodes);
-            _writer.Write(super.BitmapBlock);
-            _writer.Write(super.DirectoryBlock);
-            _writer.Write(super.InodeTableBlock);
-            _writer.Write(super.FirstDataBlock);
-            _writer.Write(super.InodeTableSize);
+            structures.Directory = new DirectoryEntry[structures.Super.TotalInodes];
+            for (var i = 0; i < structures.Directory.Length; i++)
+            {
+                structures.Directory[i] = new DirectoryEntry();
+            }
 
-            _writer.Seek(super.BitmapBlock * super.BlockSize, SeekOrigin.Begin);
+            foreach (var entry in structures.Directory)
+            {
+                _writer.Write(entry.Name);
+                _writer.Write(entry.Available);
+                _writer.Write(entry.Inode);
+            }
+
+            _writer.Seek(structures.Super.InodeTableBlock * structures.Super.BlockSize, SeekOrigin.Begin);
         }
     }
 }
