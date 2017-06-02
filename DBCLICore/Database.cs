@@ -37,7 +37,13 @@ namespace DBCLICore
             return structures;
         }
 
-        //TODO Disconnect method
+        public void DisconnectDatabase(FileDatabaseStructures structures)
+        {
+            structures.Super = null;
+            structures.Inodes = null;
+            structures.BitMap = null;
+            structures.Directory = null;
+        }
 
         public void DropDatabase(string name)
         {

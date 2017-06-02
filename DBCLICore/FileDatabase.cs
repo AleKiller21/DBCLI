@@ -39,6 +39,12 @@ namespace DBCLICore
 
         public void DropDatabase(DropDatabaseNode node)
         {
+            if (_connection)
+            {
+                Console.WriteLine($"In order to drop a database you must first end your session.");
+                return;
+            }
+
             try
             {
                 _databaseManager.DropDatabase(node.Name.ToString());
@@ -52,10 +58,17 @@ namespace DBCLICore
 
         public void ConnectDatabase(ConnectionNode node)
         {
+            if (_connection)
+            {
+                Console.WriteLine($"You are already connected to {node.DatabaseName}.");
+                return;
+            }
+
             try
             {
                 Structures = _databaseManager.ConnectDatabase(node.DatabaseName.ToString());
                 _connection = true;
+                Console.WriteLine($"A session to {node.DatabaseName} has been created.");
             }
             catch (FileNotFoundException e)
             {
@@ -66,6 +79,17 @@ namespace DBCLICore
                 Console.WriteLine("An error has occurred! Here is more info:");
                 Console.WriteLine(e.Message);
             }
+        }
+
+        public void DisconnectDatabase()
+        {
+            if (_connection)
+            {
+                _databaseManager.DisconnectDatabase(Structures);
+                _connection = false;
+                Console.WriteLine("Session has finished.");
+            }
+            else Console.WriteLine("You have not initiate session with any database.");
         }
     }
 }

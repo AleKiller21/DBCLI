@@ -52,9 +52,10 @@ namespace DB2CLI
 
         private void EvaluateCommand(StatementNode node)
         {
-            if(node is CreateObjectNode) _database.CreateDatabase((CreateDatabaseNode) node);
-            else if(node is ConnectionNode) _database.ConnectDatabase((ConnectionNode) node);
-            else if(node is DropObjectNode) _database.DropDatabase((DropDatabaseNode) node);
+            if(node is CreateDatabaseNode) _database.CreateDatabase((CreateDatabaseNode) node);
+            else if(node is ConnectDatabaseNode) _database.ConnectDatabase((ConnectionNode) node);
+            else if(node is DropDatabaseNode) _database.DropDatabase((DropDatabaseNode) node);
+            else if(node is DisconnectDatabaseNode) _database.DisconnectDatabase();
         }
     }
 }
