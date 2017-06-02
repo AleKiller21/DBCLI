@@ -56,6 +56,7 @@ namespace DB2CLI
             else if(node is ConnectDatabaseNode) _database.ConnectDatabase((ConnectionNode) node);
             else if(node is DropDatabaseNode) _database.DropDatabase((DropDatabaseNode) node);
             else if(node is DisconnectDatabaseNode) _database.DisconnectDatabase();
+            else if(node is CreateTableNode) _database.CreateTable((CreateTableNode)node);
         }
     }
 }

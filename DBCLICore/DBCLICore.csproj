@@ -40,7 +40,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Database.cs" />
+    <Compile Include="DatabaseManager.cs" />
     <Compile Include="FileDatabase.cs" />
     <Compile Include="FileDatabaseReader.cs" />
     <Compile Include="FileDatabaseStructures.cs" />
@@ -50,7 +50,10 @@
     <Compile Include="Models\Inode.cs" />
     <Compile Include="Models\SuperBlock.cs" />
     <Compile Include="Exceptions\NotDivisibleByTwoException.cs" />
+    <Compile Include="Exceptions\NotEnoughFreeBlocksException.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Exceptions\SessionActiveException.cs" />
+    <Compile Include="SessionNotCreatedException.cs" />
     <Compile Include="Table.cs" />
   </ItemGroup>
   <ItemGroup>
