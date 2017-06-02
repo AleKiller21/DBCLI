@@ -27,10 +27,10 @@ namespace DBCLICore.Models
 
         }
 
-        public SuperBlock(long databaseSize, int blockSize)
+        public SuperBlock(long databaseSize)
         {
             DatabaseSize = databaseSize;
-            BlockSize = blockSize;
+            BlockSize = 4096;
             BytesAvailablePerBlock = BlockSize - sizeof(int);
             TotalBlocks = (int) (DatabaseSize / BlockSize);
             TotalInodes = BlockSize / Inode.Size();

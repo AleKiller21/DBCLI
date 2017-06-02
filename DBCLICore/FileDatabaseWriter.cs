@@ -24,7 +24,7 @@ namespace DBCLICore
                     _writer.Write(buffer);
                 }
 
-                var structures = new FileDatabaseStructures { Super = new SuperBlock(size, 512) };
+                var structures = new FileDatabaseStructures { Super = new SuperBlock(size) };
 
                 _writer.Seek(0, SeekOrigin.Begin);
                 WriteStructuresToDisk(structures);
@@ -36,6 +36,7 @@ namespace DBCLICore
             WriteSuperBlock(structures.Super);
             WriteBitMap(structures);
             WriteDirectory(structures);
+            WriteInodeTable(structures);
         }
 
         private void WriteSuperBlock(SuperBlock super)
@@ -55,12 +56,12 @@ namespace DBCLICore
             _writer.Write(super.InodeTableBlock);
             _writer.Write(super.FirstDataBlock);
             _writer.Write(super.InodeTableSize);
-
-            _writer.Seek(super.BitmapBlock * super.BlockSize, SeekOrigin.Begin);
         }
 
         private void WriteBitMap(FileDatabaseStructures structures)
         {
+            _writer.Seek(structures.Super.BitmapBlock * structures.Super.BlockSize, SeekOrigin.Begin);
+
             structures.BitMap = new byte[structures.Super.BitmapSize];
             var blockCounter = 0;
             const byte msb = 128;
@@ -80,11 +81,12 @@ namespace DBCLICore
             }
 
             _writer.Write(structures.BitMap);
-            _writer.Seek(structures.Super.DirectoryBlock * structures.Super.BlockSize, SeekOrigin.Begin);
         }
 
         private void WriteDirectory(FileDatabaseStructures structures)
         {
+            _writer.Seek(structures.Super.DirectoryBlock * structures.Super.BlockSize, SeekOrigin.Begin);
+
             structures.Directory = new DirectoryEntry[structures.Super.TotalInodes];
             for (var i = 0; i < structures.Directory.Length; i++)
             {
@@ -97,8 +99,22 @@ namespace DBCLICore
                 _writer.Write(entry.Available);
                 _writer.Write(entry.Inode);
             }
+        }
 
+        private void WriteInodeTable(FileDatabaseStructures structures)
+        {
             _writer.Seek(structures.Super.InodeTableBlock * structures.Super.BlockSize, SeekOrigin.Begin);
+
+            var inodes = new Inode[structures.Super.TotalInodes];
+            for (var i = 0; i < structures.Super.TotalInodes; i++)
+            {
+                inodes[i] = new Inode();
+
+                _writer.Write(inodes[i].RecordSize);
+                _writer.Write(inodes[i].RecordsAdded);
+                _writer.Write(inodes[i].TableInfoBlockPointer);
+                _writer.Write(inodes[i].DataBlockPointer);
+            }
         }
     }
 }

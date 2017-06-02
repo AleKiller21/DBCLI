@@ -16,12 +16,12 @@ namespace DBCLICore
         public FileDatabaseStructures ConnectDatabase(string name)
         {
             _path = name;
-
             using (_reader = new BinaryReader(File.Open(_path, FileMode.Open)))
             {
                 var structures = new FileDatabaseStructures { Super = ReadSuperBlock() };
                 structures.BitMap = ReadBitmap(structures.Super);
                 structures.Directory = ReadDirectory(structures.Super);
+                structures.Inodes = ReadInodeTable(structures.Super);
 
                 return structures;
             }
@@ -89,11 +89,29 @@ namespace DBCLICore
             return entries;
         }
 
+        private Inode[] ReadInodeTable(SuperBlock super)
+        {
+            SetReaderPosition(super.InodeTableBlock * super.BlockSize);
+
+            var inodes = new Inode[super.TotalInodes];
+            for (var i = 0; i < inodes.Length; i++)
+            {
+                inodes[i] = new Inode
+                {
+                    RecordSize = _reader.ReadUInt32(),
+                    RecordsAdded = _reader.ReadUInt32(),
+                    TableInfoBlockPointer = _reader.ReadUInt32(),
+                    DataBlockPointer = _reader.ReadUInt32(),
+                    Columns = new List<ColumnMetadata>()
+                };
+            }
+
+            return inodes;
+        }
+
         private void SetReaderPosition(long pos)
         {
             _reader.BaseStream.Position = pos;
         }
-
-        //TODO ReadInodesTable()
     }
 }

@@ -14,7 +14,7 @@ namespace DBCLICore.Models
 
         public static int Size()
         {
-            return sizeof(int) * 3;
+            return sizeof(int) * 4;
         }
     }
 }
