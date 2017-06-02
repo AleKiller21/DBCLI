@@ -49,6 +49,7 @@
     <Compile Include="Models\DirectoryEntry.cs" />
     <Compile Include="Models\Inode.cs" />
     <Compile Include="Models\SuperBlock.cs" />
+    <Compile Include="Exceptions\NotDivisibleByTwoException.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Table.cs" />
   </ItemGroup>
