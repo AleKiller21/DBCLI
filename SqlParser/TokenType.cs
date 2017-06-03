@@ -28,6 +28,8 @@
         RwInt,
         RwChar,
         RwDouble,
+        RwShow,
+        RwAllTables,
         OpAll,
         OpEqual,
         OpNotEqual,

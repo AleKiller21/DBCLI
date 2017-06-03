@@ -4,6 +4,7 @@ using SqlParser.SyntaxAnalyser.Nodes;
 using SqlParser.SyntaxAnalyser.Nodes.ExpressionNodes;
 using SqlParser.SyntaxAnalyser.Nodes.LiteralNodes;
 using SqlParser.SyntaxAnalyser.Nodes.Operators;
+using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.Commands;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.CreateNodes;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.DatabaseConnectionNodes;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.DeleteNodes;
@@ -51,8 +52,24 @@ namespace SqlParser.SyntaxAnalyser
             if (CheckToken(TokenType.RwSelect)) return SelectTable();
             if (CheckToken(TokenType.RwUpdate)) return UpdateTable();
             if (CheckToken(TokenType.RwDelete)) return DeleteTable();
+            if (CheckToken(TokenType.RwShow)) return ShowTables();
 
             throw new ParserException($"Unexpected token encountered at row {GetTokenRow()} column {GetTokenColumn()}.");
+        }
+
+        private StatementNode ShowTables()
+        {
+            if(!CheckToken(TokenType.RwShow))
+                throw new ParserException($"'show' keyword expected at row {GetTokenRow()} column {GetTokenColumn()}.");
+
+            NextToken();
+
+            if(!CheckToken(TokenType.RwAllTables))
+                throw new ParserException($"'tables' keyword expected after 'show' keyword at row {GetTokenRow()} column {GetTokenColumn()}.");
+
+            NextToken();
+
+            return new AllTablesNode();
         }
 
         private ConnectionNode DisconnectDatabase()

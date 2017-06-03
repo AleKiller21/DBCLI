@@ -210,7 +210,9 @@ namespace SqlParser
                 {"gb", TokenType.RwGb},
                 {"int", TokenType.RwInt},
                 {"double", TokenType.RwDouble},
-                {"char", TokenType.RwChar}
+                {"show", TokenType.RwShow},
+                {"tables", TokenType.RwAllTables},
+                {"char", TokenType.RwChar},
             };
 
         }

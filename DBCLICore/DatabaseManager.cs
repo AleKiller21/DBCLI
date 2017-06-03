@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using DBCLICore.Exceptions;
@@ -78,6 +79,29 @@ namespace DBCLICore
             _writer.WriteBitmap();
             _writer.WriteDirectoryEntry(directoryEntry);
             _writer.WriteInode(inode);
+        }
+
+        public List<string> ShowTables()
+        {
+            if(!_connection) throw new SessionNotCreatedException();
+
+            var entries = Disk.Structures.Directory.Where(entry => !entry.Available).ToList();
+            var prints = new List<string>();
+
+            foreach (var entry in entries)
+            {
+                var inode = Disk.Structures.Inodes.First(ind => ind.Number == entry.Inode);
+                var recordSize = inode.RecordSize;
+                var totaRecords = inode.RecordsAdded;
+
+                foreach (var column in inode.Columns)
+                {
+                    prints.Add(
+                        $"|{new string(entry.Name).Replace("\0", string.Empty),20}|{new string(column.Name).Replace("\0", string.Empty),20}|{column.Type,20}|{column.Type.Size,20}|{recordSize,20}|{totaRecords,20}|");
+                }
+            }
+
+            return prints;
         }
     }
 }

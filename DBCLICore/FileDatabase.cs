@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using DBCLICore.Exceptions;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.CreateNodes;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.DatabaseConnectionNodes;
@@ -93,6 +94,26 @@ namespace DBCLICore
             {
                 _databaseManager.CreateTable(node);
                 Console.WriteLine($"{node.Name} table has been created.");
+            }
+            catch (SessionNotCreatedException e)
+            {
+                Console.WriteLine(e.Message);
+            }
+        }
+
+        public void ShowTables()
+        {
+            try
+            {
+                Console.WriteLine(
+                    $"|{"Table",20}|{"Column",20}|{"Type",20}|{"Type Size",20}|{"Record Size",20}|{"Total Records",20}|");
+                Console.WriteLine("_______________________________________________________________________________________________________________________________");
+                var prints = _databaseManager.ShowTables();
+
+                foreach (var print in prints)
+                {
+                    Console.WriteLine(print);
+                }
             }
             catch (SessionNotCreatedException e)
             {

@@ -3,6 +3,7 @@ using DBCLICore;
 using SqlParser;
 using SqlParser.SyntaxAnalyser;
 using SqlParser.SyntaxAnalyser.Exceptions;
+using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.Commands;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.CreateNodes;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.DatabaseConnectionNodes;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.DropNodes;
@@ -55,6 +56,7 @@ namespace DB2CLI
             else if(node is DropDatabaseNode) _database.DropDatabase((DropDatabaseNode) node);
             else if(node is DisconnectDatabaseNode) _database.DisconnectDatabase();
             else if(node is CreateTableNode) _database.CreateTable((CreateTableNode)node);
+            else if(node is AllTablesNode) _database.ShowTables();
         }
     }
 }
