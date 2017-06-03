@@ -120,5 +120,25 @@ namespace DBCLICore
                 Console.WriteLine(e.Message);
             }
         }
+
+        public void ShowSuperBlock()
+        {
+            try
+            {
+                var fields = _databaseManager.ShowSuperBlock();
+                foreach (var field in fields)
+                {
+                    Console.WriteLine(field);
+                }
+            }
+            catch (SessionNotCreatedException e)
+            {
+                Console.WriteLine(e.Message);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+        }
     }
 }

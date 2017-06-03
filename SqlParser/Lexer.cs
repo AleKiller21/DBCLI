@@ -212,6 +212,7 @@ namespace SqlParser
                 {"double", TokenType.RwDouble},
                 {"show", TokenType.RwShow},
                 {"tables", TokenType.RwAllTables},
+                {"super", TokenType.RwSuper},
                 {"char", TokenType.RwChar},
             };
 

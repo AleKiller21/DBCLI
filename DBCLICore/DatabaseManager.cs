@@ -103,5 +103,13 @@ namespace DBCLICore
 
             return prints;
         }
+
+        public List<string> ShowSuperBlock()
+        {
+            if(!_connection) throw new SessionNotCreatedException();
+
+            return Disk.Structures.Super.GetType().GetFields()
+                .Select(field => $"{field.Name}: {field.GetValue(Disk.Structures.Super)}").ToList();
+        }
     }
 }

@@ -52,24 +52,34 @@ namespace SqlParser.SyntaxAnalyser
             if (CheckToken(TokenType.RwSelect)) return SelectTable();
             if (CheckToken(TokenType.RwUpdate)) return UpdateTable();
             if (CheckToken(TokenType.RwDelete)) return DeleteTable();
-            if (CheckToken(TokenType.RwShow)) return ShowTables();
+            if (CheckToken(TokenType.RwShow)) return ShowObjects();
 
             throw new ParserException($"Unexpected token encountered at row {GetTokenRow()} column {GetTokenColumn()}.");
         }
 
-        private StatementNode ShowTables()
+        private StatementNode ShowObjects()
         {
             if(!CheckToken(TokenType.RwShow))
                 throw new ParserException($"'show' keyword expected at row {GetTokenRow()} column {GetTokenColumn()}.");
 
             NextToken();
+            return ShowObjectsPrime();
+        }
 
-            if(!CheckToken(TokenType.RwAllTables))
-                throw new ParserException($"'tables' keyword expected after 'show' keyword at row {GetTokenRow()} column {GetTokenColumn()}.");
+        private StatementNode ShowObjectsPrime()
+        {
+            if (CheckToken(TokenType.RwAllTables))
+            {
+                NextToken();
+                return new AllTablesNode();
+            }
+            if (CheckToken(TokenType.RwSuper))
+            {
+                NextToken();
+                return new SuperNode();
+            }
 
-            NextToken();
-
-            return new AllTablesNode();
+            throw new ParserException($"'tables' or 'super' keyword was expected after the 'show' keyword at row {GetTokenRow()} column {GetTokenColumn()}.");
         }
 
         private ConnectionNode DisconnectDatabase()

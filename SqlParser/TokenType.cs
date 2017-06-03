@@ -30,6 +30,7 @@
         RwDouble,
         RwShow,
         RwAllTables,
+        RwSuper,
         OpAll,
         OpEqual,
         OpNotEqual,
