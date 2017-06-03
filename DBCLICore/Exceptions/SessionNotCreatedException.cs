@@ -1,7 +1,6 @@
 ﻿using System;
-using System.Runtime.Serialization;
 
-namespace DBCLICore
+namespace DBCLICore.Exceptions
 {
     public class SessionNotCreatedException : Exception
     {

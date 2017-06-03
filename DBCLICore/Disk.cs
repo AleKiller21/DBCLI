@@ -9,5 +9,6 @@ namespace DBCLICore
     public static class Disk
     {
         public static FileDatabaseStructures Structures;
+        public static string CurrentDatabase;
     }
 }

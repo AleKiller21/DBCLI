@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Text;
 using DBCLICore.Exceptions;
 using DBCLICore.Models;
@@ -10,7 +11,6 @@ namespace DBCLICore
 {
     public class DatabaseManager
     {
-        private string _currentDatabase;
         private bool _connection;
         private readonly FileDatabaseWriter _writer;
         private readonly FileDatabaseReader _reader;
@@ -34,8 +34,8 @@ namespace DBCLICore
         {
             if (_connection) throw new SessionActiveException($"You already established a session to {name} database");
 
-            _currentDatabase = ManagerUtilities.GetQualifiedName(name);
-            _reader.ConnectDatabase(_currentDatabase);
+            Disk.CurrentDatabase = ManagerUtilities.GetQualifiedName(name);
+            _reader.ConnectDatabase(Disk.CurrentDatabase);
             _connection = true;
         }
 
@@ -48,6 +48,7 @@ namespace DBCLICore
             Disk.Structures.BitMap = null;
             Disk.Structures.Directory = null;
             Disk.Structures = null;
+            Disk.CurrentDatabase = "";
             _connection = false;
         }
 
@@ -59,17 +60,24 @@ namespace DBCLICore
             File.Delete(ManagerUtilities.GetQualifiedName(name));
         }
 
-        public void CreateTable()
+        public void CreateTable(CreateTableNode table)
         {
             if (!_connection) throw new SessionNotCreatedException();
+            if(!ManagerUtilities.CheckFreeSpace()) throw new NotEnoughFreeInodesException();
+            if (table.Columns.Count > Disk.Structures.Super.BlockSize / ColumnMetadata.Size())
+            {
+                Console.WriteLine("Too many columns!");
+                return;
+            }
 
             var blocks = ManagerUtilities.GetBlocksFromBitmap(2);
-            /*
-             * 1) Extraer 2 bloques disponibles del bitmap. Uno para la metadata de la tabla y otro reservado para los registros.
-             * 2) Recorrer la tabla de inodos en busca de uno libre. Inicializar sus campos con los respectivos valores.
-             * 3) Ir al bloque de la metadata de la tabla y escribir los campos del modelo ColumnMetadata.
-             * 4) Ir al directorio en busca de una entrada libre y marcarla como ocupada junto con el nombre de la tabla y el apuntador al inodo.
-             */
+            var inode = ManagerUtilities.SetUpInode(blocks, table.Columns);
+            var directoryEntry = ManagerUtilities.SetUpDirectoryEntry(table.Name.ToString(), inode);
+
+            _writer.WriteSuperBlock();
+            _writer.WriteBitmap();
+            _writer.WriteDirectoryEntry(directoryEntry);
+            _writer.WriteInode(inode);
         }
     }
 }

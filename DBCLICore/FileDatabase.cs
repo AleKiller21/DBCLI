@@ -9,7 +9,6 @@ namespace DBCLICore
 {
     public class FileDatabase
     {
-        
         private DatabaseManager _databaseManager;
 
         public FileDatabase()
@@ -82,15 +81,23 @@ namespace DBCLICore
                 _databaseManager.DisconnectDatabase();
                 Console.WriteLine("Session has ended.");
             }
-            catch (Exception e)
+            catch (SessionNotCreatedException e)
             {
-                Console.WriteLine("You have not initiate session with any database.");
+                Console.WriteLine(e.Message);
             }
         }
 
         public void CreateTable(CreateTableNode node)
         {
-            _databaseManager.CreateTable();
+            try
+            {
+                _databaseManager.CreateTable(node);
+                Console.WriteLine($"{node.Name} table has been created.");
+            }
+            catch (SessionNotCreatedException e)
+            {
+                Console.WriteLine(e.Message);
+            }
         }
     }
 }

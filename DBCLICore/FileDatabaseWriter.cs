@@ -34,13 +34,13 @@ namespace DBCLICore
 
         private void WriteStructuresToDisk()
         {
-            WriteSuperBlock();
-            WriteBitMap();
+            WriteSuperBlockFirstTime();
+            WriteBitMapFirstTime();
             WriteDirectory();
             WriteInodeTable();
         }
 
-        private void WriteSuperBlock()
+        private void WriteSuperBlockFirstTime()
         {
             _writer.Write(Disk.Structures.Super.TotalBlocks);
             _writer.Write(Disk.Structures.Super.FreeBlocks);
@@ -59,7 +59,7 @@ namespace DBCLICore
             _writer.Write(Disk.Structures.Super.InodeTableSize);
         }
 
-        private void WriteBitMap()
+        private void WriteBitMapFirstTime()
         {
             _writer.Seek(Disk.Structures.Super.BitmapBlock * Disk.Structures.Super.BlockSize, SeekOrigin.Begin);
 
@@ -69,7 +69,7 @@ namespace DBCLICore
 
             for (var i = 0; i < Disk.Structures.Super.BitmapSize; i++)
             {
-                var word = Byte.MaxValue;
+                var word = byte.MaxValue;
 
                 for (byte bit = 0; bit < sizeof(byte) * 8; bit++)
                 {
@@ -88,17 +88,14 @@ namespace DBCLICore
         {
             _writer.Seek(Disk.Structures.Super.DirectoryBlock * Disk.Structures.Super.BlockSize, SeekOrigin.Begin);
 
-            Disk.Structures.Directory = new DirectoryEntry[Disk.Structures.Super.TotalInodes];
-            for (var i = 0; i < Disk.Structures.Directory.Length; i++)
+            for (var i = 0; i < Disk.Structures.Super.TotalInodes; i++)
             {
-                Disk.Structures.Directory[i] = new DirectoryEntry();
-            }
+                var entry = new DirectoryEntry{Number = i};
 
-            foreach (var entry in Disk.Structures.Directory)
-            {
                 _writer.Write(entry.Name);
                 _writer.Write(entry.Available);
                 _writer.Write(entry.Inode);
+                _writer.Write(entry.Number);
             }
         }
 
@@ -106,15 +103,80 @@ namespace DBCLICore
         {
             _writer.Seek(Disk.Structures.Super.InodeTableBlock * Disk.Structures.Super.BlockSize, SeekOrigin.Begin);
 
-            var inodes = new Inode[Disk.Structures.Super.TotalInodes];
             for (var i = 0; i < Disk.Structures.Super.TotalInodes; i++)
             {
-                inodes[i] = new Inode();
+                var inode = new Inode{Available = true, Number = i};
 
-                _writer.Write(inodes[i].RecordSize);
-                _writer.Write(inodes[i].RecordsAdded);
-                _writer.Write(inodes[i].TableInfoBlockPointer);
-                _writer.Write(inodes[i].DataBlockPointer);
+                _writer.Write(inode.Available);
+                _writer.Write(inode.RecordSize);
+                _writer.Write(inode.RecordsAdded);
+                _writer.Write(inode.TableInfoBlockPointer);
+                _writer.Write(inode.DataBlockPointer);
+                _writer.Write(inode.Number);
+                _writer.Write(inode.ColumnCount);
+            }
+        }
+
+        public void WriteSuperBlock()
+        {
+            using (_writer = new BinaryWriter(File.Open(Disk.CurrentDatabase, FileMode.Open)))
+            {
+                _writer.Seek(0, SeekOrigin.Begin);
+                WriteSuperBlockFirstTime();
+            }
+        }
+
+        public void WriteBitmap()
+        {
+            using (_writer = new BinaryWriter(File.Open(Disk.CurrentDatabase, FileMode.Open)))
+            {
+                _writer.Seek(Disk.Structures.Super.BitmapBlock * Disk.Structures.Super.BlockSize, SeekOrigin.Begin);
+                _writer.Write(Disk.Structures.BitMap);
+            }
+        }
+
+        public void WriteInode(Inode inode)
+        {
+            using (_writer = new BinaryWriter(File.Open(Disk.CurrentDatabase, FileMode.Open)))
+            {
+                var offset = Disk.Structures.Super.InodeTableBlock * Disk.Structures.Super.BlockSize +
+                             inode.Number * Inode.Size();
+
+                _writer.Seek(offset, SeekOrigin.Begin);
+                _writer.Write(inode.Available);
+                _writer.Write(inode.RecordSize);
+                _writer.Write(inode.RecordsAdded);
+                _writer.Write(inode.TableInfoBlockPointer);
+                _writer.Write(inode.DataBlockPointer);
+                _writer.Write(inode.Number);
+                _writer.Write(inode.ColumnCount);
+
+                //Solo habra un bloque para la metadata
+                _writer.Seek((int)inode.TableInfoBlockPointer, SeekOrigin.Begin);
+                foreach (var column in inode.Columns)
+                {
+                    var typeName = new char[ColumnMetadata.TypeNameSize];
+                    column.Type.ToString().CopyTo(0, typeName, 0, column.Type.ToString().Length);
+
+                    _writer.Write(column.Name);
+                    _writer.Write(typeName);
+                    _writer.Write(column.Type.Size);
+                }
+            }
+        }
+
+        public void WriteDirectoryEntry(DirectoryEntry entry)
+        {
+            using (_writer = new BinaryWriter(File.Open(Disk.CurrentDatabase, FileMode.Open)))
+            {
+                var offset = Disk.Structures.Super.DirectoryBlock * Disk.Structures.Super.BlockSize +
+                             entry.Number * DirectoryEntry.Size();
+
+                _writer.Seek(offset, SeekOrigin.Begin);
+                _writer.Write(entry.Name);
+                _writer.Write(entry.Available);
+                _writer.Write(entry.Inode);
+                _writer.Write(entry.Number);
             }
         }
     }

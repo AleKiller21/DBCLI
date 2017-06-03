@@ -62,13 +62,13 @@ namespace SqlParser.SyntaxAnalyser
 
             NextToken();
 
-            if (!CheckToken(TokenType.Id))
-                throw new IdExpectedException(GetTokenRow(), GetTokenColumn());
+            //if (!CheckToken(TokenType.Id))
+            //    throw new IdExpectedException(GetTokenRow(), GetTokenColumn());
 
-            var databaseName = new IdNode(_currenToken.Lexeme);
-            NextToken();
+            //var databaseName = new IdNode(_currenToken.Lexeme);
+            //NextToken();
 
-            return new DisconnectDatabaseNode{DatabaseName = databaseName};
+            return new DisconnectDatabaseNode();
         }
 
         private ConnectionNode ConnectDatabase()

@@ -6,5 +6,10 @@
         {
             Size = 4;
         }
+
+        public override string ToString()
+        {
+            return "int";
+        }
     }
 }

@@ -21,18 +21,16 @@ namespace DB2CLI
         public void Start()
         {
             var query = "";
-            Parser parser;
-            StatementNode statement;
-
             while (!query.Equals("quit"))
             {
                 Console.Write("db2cli>");
                 query = Console.ReadLine();
                 if(query.Equals("") || query.Equals("quit")) continue;
 
+                StatementNode statement;
                 try
                 {
-                    parser = new Parser(query.ToLower());
+                    var parser = new Parser(query.ToLower());
                     statement = parser.Parse();
                 }
                 catch (ParserException e)

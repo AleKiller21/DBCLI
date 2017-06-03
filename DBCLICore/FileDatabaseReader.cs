@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using DBCLICore.Models;
+using SqlParser.SyntaxAnalyser.Nodes.TypeNodes;
 
 namespace DBCLICore
 {
@@ -80,7 +81,8 @@ namespace DBCLICore
                 {
                     Name = _reader.ReadChars(DirectoryEntry.NameSize),
                     Available = _reader.ReadBoolean(),
-                    Inode = _reader.ReadInt32()
+                    Inode = _reader.ReadInt32(),
+                    Number = _reader.ReadInt32()
                 };
             }
 
@@ -96,12 +98,33 @@ namespace DBCLICore
             {
                 inodes[i] = new Inode
                 {
+                    Available = _reader.ReadBoolean(),
                     RecordSize = _reader.ReadUInt32(),
                     RecordsAdded = _reader.ReadUInt32(),
                     TableInfoBlockPointer = _reader.ReadUInt32(),
                     DataBlockPointer = _reader.ReadUInt32(),
+                    Number = _reader.ReadInt32(),
+                    ColumnCount = _reader.ReadInt32(),
                     Columns = new List<ColumnMetadata>()
                 };
+            }
+
+            foreach (var inode in inodes)
+            {
+                if(inode.TableInfoBlockPointer == 0) continue;
+
+                SetReaderPosition(inode.TableInfoBlockPointer);
+                for (var i = 0; i < inode.ColumnCount; i++)
+                {
+                    var columnName = _reader.ReadChars(ColumnMetadata.NameSize);
+                    var typeName = _reader.ReadChars(ColumnMetadata.TypeNameSize);
+                    var typeSize = _reader.ReadInt32();
+
+                    var meta = new ColumnMetadata { Name = columnName, Type = TypeFactory.GetType(new string(typeName).Replace("\0", string.Empty)) };
+                    meta.Type.Size = typeSize;
+
+                    inode.Columns.Add(meta);
+                }
             }
 
             return inodes;

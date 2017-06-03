@@ -2,5 +2,9 @@
 {
     public class StringTypeNode : TypeNode
     {
+        public override string ToString()
+        {
+            return "char";
+        }
     }
 }

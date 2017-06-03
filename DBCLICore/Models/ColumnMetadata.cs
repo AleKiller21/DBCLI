@@ -11,12 +11,17 @@ namespace DBCLICore.Models
     {
         public char[] Name;
         public TypeNode Type;
-        public int NameSize;
+        public const int NameSize = 50;
+        public const int TypeNameSize = 7; //Espacio para guardar el nombre del tipo
 
         public ColumnMetadata()
         {
-            NameSize = 50;
             Name = new char[NameSize];
+        }
+
+        public static int Size()
+        {
+            return NameSize + sizeof(int) + TypeNameSize;
         }
     }
 }

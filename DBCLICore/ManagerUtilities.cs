@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using DBCLICore.Exceptions;
+using DBCLICore.Models;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.CreateNodes;
 
 namespace DBCLICore
@@ -47,6 +45,47 @@ namespace DBCLICore
             return extractedBlocks;
         }
 
+        public static Inode SetUpInode(List<int> blocks, List<ColumnNode> columns)
+        {
+            foreach (var inode in Disk.Structures.Inodes)
+            {
+                if(!inode.Available) continue;
+
+                inode.Available = false;
+                inode.DataBlockPointer = (uint) (blocks[0] * Disk.Structures.Super.BlockSize);
+                inode.TableInfoBlockPointer = (uint) (blocks[1] * Disk.Structures.Super.BlockSize);
+                inode.RecordSize = (uint) ManagerUtilities.CalculateRecordSize(columns);
+                inode.Columns = SetUpInodeColumns(columns);
+                inode.ColumnCount = columns.Count;
+
+                Disk.Structures.Super.FreeInodes--;
+                return inode;
+            }
+
+            throw new NotEnoughFreeInodesException();
+        }
+
+        public static DirectoryEntry SetUpDirectoryEntry(string tableName, Inode inode)
+        {
+            foreach (var entry in Disk.Structures.Directory)
+            {
+                if(!entry.Available) continue;
+
+                tableName.CopyTo(0, entry.Name, 0, tableName.Length);
+                entry.Available = false;
+                entry.Inode = (int) inode.Number;
+                
+                return entry;
+            }
+
+            throw new NoDirectoryEntryAvailableException();
+        }
+
+        public static bool CheckFreeSpace()
+        {
+            return Disk.Structures.Super.FreeBlocks >= 2 && Disk.Structures.Super.FreeInodes >= 1;
+        }
+
         public static long ConvertToBytes(long size, UnitSize unit)
         {
             size *= 1024;
@@ -62,6 +101,27 @@ namespace DBCLICore
         public static string GetQualifiedName(string name)
         {
             return Path + name + ".db";
+        }
+
+        private static List<ColumnMetadata> SetUpInodeColumns(List<ColumnNode> columns)
+        {
+            var metadatas = new List<ColumnMetadata>();
+
+            foreach (var column in columns)
+            {
+                var metadata = new ColumnMetadata();
+                column.Name.ToString().CopyTo(0, metadata.Name, 0, column.Name.ToString().Length);
+                metadata.Type = column.Type;
+
+                metadatas.Add(metadata);
+            }
+
+            return metadatas;
+        }
+
+        private static int CalculateRecordSize(List<ColumnNode> columns)
+        {
+            return columns.Sum(column => column.Type.Size);
         }
     }
 }
