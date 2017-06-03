@@ -65,7 +65,7 @@ namespace DBCLICore
         public void CreateTable(CreateTableNode table)
         {
             if (!_connection) throw new SessionNotCreatedException();
-            if (table.Columns.First(column => column.Type.Size > 4000) != null)
+            if (table.Columns.FirstOrDefault(column => column.Type.Size > 4000) != null)
                 throw new ColumnSizeOutOfRangeException();
             if(!ManagerUtilities.CheckFreeSpace()) throw new NotEnoughFreeInodesException();
             if (table.Columns.Count > Disk.Structures.Super.BlockSize / ColumnMetadata.Size())
@@ -78,20 +78,25 @@ namespace DBCLICore
             var inode = ManagerUtilities.SetUpInode(blocks, table.Columns);
             var directoryEntry = ManagerUtilities.SetUpDirectoryEntry(table.Name.ToString(), inode);
 
-            _writer.WriteSuperBlock();
-            _writer.WriteBitmap();
-            _writer.WriteDirectoryEntry(directoryEntry);
-            _writer.WriteInode(inode);
+            FlushDisk(directoryEntry, inode);
         }
 
         public void DropTable(string tableName)
         {
-            /*
-             * 1) Recorrer el directorio en busca de una tabla con ese nombre.
-             * 2) Setear el nombre de la tabla con '\0' y marcarla como disponible.
-             * 3) Marcar el inodo asociado a esa entrada como disponible.
-             * 4) Obtener el numero de bloque de los dos bloques asociados al inodo y marcarlos como disponibles en el bitmap.
-             */
+            var entry = ManagerUtilities.GetDirectoryEntry(tableName);
+            entry.Available = true;
+            Array.Clear(entry.Name, 0, entry.Name.Length);
+
+            var inode = ManagerUtilities.GetInode(entry.Inode);
+            var blockSize = Disk.Structures.Super.BlockSize;
+            inode.Available = true;
+            inode.RecordsAdded = 0;
+            Disk.Structures.Super.FreeInodes++;
+
+            var blocks = new List<int>{(int)inode.DataBlockPointer / blockSize, (int)inode.TableInfoBlockPointer / blockSize};
+            //TODO Obtener los bloques de registros de la tabla
+            ManagerUtilities.FreeBlocks(blocks);
+            FlushDisk(entry, inode);
         }
 
         public List<string> ShowTables()
@@ -123,6 +128,14 @@ namespace DBCLICore
 
             return Disk.Structures.Super.GetType().GetFields()
                 .Select(field => $"{field.Name}: {field.GetValue(Disk.Structures.Super)}").ToList();
+        }
+
+        private void FlushDisk(DirectoryEntry entry, Inode inode)
+        {
+            _writer.WriteSuperBlock();
+            _writer.WriteBitmap();
+            _writer.WriteDirectoryEntry(entry);
+            _writer.WriteInode(inode);
         }
     }
 }

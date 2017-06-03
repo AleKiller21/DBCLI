@@ -90,30 +90,33 @@ namespace DBCLICore
 
         public void CreateTable(CreateTableNode node)
         {
-            try
-            {
-                _databaseManager.CreateTable(node);
-                Console.WriteLine($"{node.Name} table has been created.");
-            }
-            catch (ColumnSizeOutOfRangeException e)
-            {
-                Console.WriteLine(e.Message);
-            }
-            catch (SessionNotCreatedException e)
-            {
-                Console.WriteLine(e.Message);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("An error has occurred! Here is more info:");
-                Console.WriteLine(e.Message);
-            }
+            _databaseManager.CreateTable(node);
+            Console.WriteLine($"{node.Name} table has been created.");
+            //try
+            //{
+            //    _databaseManager.CreateTable(node);
+            //    Console.WriteLine($"{node.Name} table has been created.");
+            //}
+            //catch (ColumnSizeOutOfRangeException e)
+            //{
+            //    Console.WriteLine(e.Message);
+            //}
+            //catch (SessionNotCreatedException e)
+            //{
+            //    Console.WriteLine(e.Message);
+            //}
+            //catch (Exception e)
+            //{
+            //    Console.WriteLine("An error has occurred! Here is more info:");
+            //    Console.WriteLine(e.Message);
+            //}
         }
 
         public void ShowTables()
         {
             try
             {
+                Console.WriteLine("");
                 Console.WriteLine(
                     $"|{"Table",20}|{"Column",20}|{"Type",20}|{"Type Size",20}|{"Record Size",20}|{"Total Records",20}|");
                 Console.WriteLine("_______________________________________________________________________________________________________________________________");
@@ -123,6 +126,7 @@ namespace DBCLICore
                 {
                     Console.WriteLine(print);
                 }
+                Console.WriteLine("");
             }
             catch (SessionNotCreatedException e)
             {
@@ -135,10 +139,12 @@ namespace DBCLICore
             try
             {
                 var fields = _databaseManager.ShowSuperBlock();
+                Console.WriteLine("");
                 foreach (var field in fields)
                 {
                     Console.WriteLine(field);
                 }
+                Console.WriteLine("");
             }
             catch (SessionNotCreatedException e)
             {

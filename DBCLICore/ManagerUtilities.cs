@@ -73,12 +73,27 @@ namespace DBCLICore
 
                 tableName.CopyTo(0, entry.Name, 0, tableName.Length);
                 entry.Available = false;
-                entry.Inode = (int) inode.Number;
+                entry.Inode = inode.Number;
                 
                 return entry;
             }
 
             throw new NoDirectoryEntryAvailableException();
+        }
+
+        public static DirectoryEntry GetDirectoryEntry(string tableName)
+        {
+            return Disk.Structures.Directory.First(entry => CharArrayToString(entry.Name).Equals(tableName));
+        }
+
+        public static Inode GetInode(int inumber)
+        {
+            return Disk.Structures.Inodes.First(inode => inode.Number == inumber);
+        }
+
+        private static string CharArrayToString(char[] array)
+        {
+            return new string(array).Replace("\0", string.Empty);
         }
 
         public static bool CheckFreeSpace()
@@ -122,6 +137,30 @@ namespace DBCLICore
         private static int CalculateRecordSize(List<ColumnNode> columns)
         {
             return columns.Sum(column => column.Type.Size);
+        }
+
+        public static void FreeBlocks(List<int> blocks)
+        {
+            foreach (var block in blocks)
+            {
+                var bytePosition = block / 8;
+                var blockCounter = bytePosition * 8;
+                var msb = 128;
+
+                for (var i = 0; i < 8; i++)
+                {
+                    if (blockCounter != block)
+                    {
+                        blockCounter++;
+                        continue;
+                    }
+
+                    Disk.Structures.BitMap[bytePosition] ^= (byte)(msb >> i);
+                    Disk.Structures.Super.FreeBlocks++;
+                    Disk.Structures.Super.UsedBlocks--;
+                    break;
+                }
+            }
         }
     }
 }
