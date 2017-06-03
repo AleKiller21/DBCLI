@@ -40,6 +40,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Exceptions\ColumnSizeOutOfRangeException.cs" />
     <Compile Include="DatabaseManager.cs" />
     <Compile Include="Disk.cs" />
     <Compile Include="FileDatabase.cs" />

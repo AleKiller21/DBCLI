@@ -95,8 +95,17 @@ namespace DBCLICore
                 _databaseManager.CreateTable(node);
                 Console.WriteLine($"{node.Name} table has been created.");
             }
+            catch (ColumnSizeOutOfRangeException e)
+            {
+                Console.WriteLine(e.Message);
+            }
             catch (SessionNotCreatedException e)
             {
+                Console.WriteLine(e.Message);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("An error has occurred! Here is more info:");
                 Console.WriteLine(e.Message);
             }
         }
@@ -139,6 +148,11 @@ namespace DBCLICore
             {
                 Console.WriteLine(e.Message);
             }
+        }
+
+        public void DropTable(DropTableNode node)
+        {
+            _databaseManager.DropTable(node.Name.ToString());
         }
     }
 }

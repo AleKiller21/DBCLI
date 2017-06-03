@@ -7,6 +7,7 @@ using System.Text;
 using DBCLICore.Exceptions;
 using DBCLICore.Models;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.CreateNodes;
+using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.DropNodes;
 
 namespace DBCLICore
 {
@@ -64,6 +65,8 @@ namespace DBCLICore
         public void CreateTable(CreateTableNode table)
         {
             if (!_connection) throw new SessionNotCreatedException();
+            if (table.Columns.First(column => column.Type.Size > 4000) != null)
+                throw new ColumnSizeOutOfRangeException();
             if(!ManagerUtilities.CheckFreeSpace()) throw new NotEnoughFreeInodesException();
             if (table.Columns.Count > Disk.Structures.Super.BlockSize / ColumnMetadata.Size())
             {
@@ -79,6 +82,16 @@ namespace DBCLICore
             _writer.WriteBitmap();
             _writer.WriteDirectoryEntry(directoryEntry);
             _writer.WriteInode(inode);
+        }
+
+        public void DropTable(string tableName)
+        {
+            /*
+             * 1) Recorrer el directorio en busca de una tabla con ese nombre.
+             * 2) Setear el nombre de la tabla con '\0' y marcarla como disponible.
+             * 3) Marcar el inodo asociado a esa entrada como disponible.
+             * 4) Obtener el numero de bloque de los dos bloques asociados al inodo y marcarlos como disponibles en el bitmap.
+             */
         }
 
         public List<string> ShowTables()
