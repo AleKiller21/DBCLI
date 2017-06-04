@@ -12,7 +12,6 @@ namespace DBCLICore
 {
     public class FileDatabaseStream
     {
-        private BinaryWriter _writer;
         private FileStream _fileStream;
         private string _path;
 
@@ -126,6 +125,7 @@ namespace DBCLICore
             _fileStream.Seek(offset, SeekOrigin.Begin);
             _fileStream.Write(buffer, 0, buffer.Length);
 
+            //TODO No siempre es necesario escribir la metadata de las columnas. Solo al crear una nueva tabla, no al ingresar registros.
             _fileStream.Seek((int)inode.TableInfoBlockPointer, SeekOrigin.Begin);
             var columnMetadataListBuffer = new List<byte>();
             foreach (var column in inode.Columns)
@@ -153,84 +153,50 @@ namespace DBCLICore
         public void WriteNewRecord(Inode inode, List<ValueNode> values)
         {
             var blockPointer = GetBlockPointerPosition(inode.CurrentInsertBlockBase);
-            using (_writer = new BinaryWriter(File.Open(Disk.CurrentDatabase, FileMode.Open)))
+            var buffer = ConvertRecordValuesToByteArray(values, inode.Columns);
+
+            if (inode.NextRecordToInsertPointer + inode.RecordSize <= blockPointer)
             {
-                if (inode.NextRecordToInsertPointer + inode.RecordSize < blockPointer)
-                {
-                    _writer.Seek((int)inode.NextRecordToInsertPointer, SeekOrigin.Begin);
-                    _writer.Write(ConvertRecordValuesToByteArray(values, inode.Columns));
-                    inode.NextRecordToInsertPointer = (uint)_writer.BaseStream.Position;
-                    //WriteInode(inode);
-                }
-                else
-                {
-                    var remainingSpace = blockPointer - inode.NextRecordToInsertPointer;
-                    var buffer = ConvertRecordValuesToByteArray(values, inode.Columns);
-                    var newBlock = ManagerUtilities.GetBlocksFromBitmap(1);
-
-                    //TODO Permitir escribir el registro recursivamente en multiples bloques en caso de que el RecordSize lo demande
-                    _writer.Write(buffer, 0, (int)remainingSpace);
-                    _writer.Write((uint)(newBlock[0] * Disk.Structures.Super.BlockSize));
-                    _writer.Seek(newBlock[0] * Disk.Structures.Super.BlockSize, SeekOrigin.Begin);
-                    _writer.Write(buffer, (int)remainingSpace, buffer.Length - (int)remainingSpace);
-
-                    inode.NextRecordToInsertPointer = (uint)_writer.BaseStream.Position;
-                    inode.CurrentInsertBlockBase = (uint)(newBlock[0] * Disk.Structures.Super.BlockSize);
-                    Disk.Structures.Super.UsedBlocks++;
-                    Disk.Structures.Super.FreeBlocks--;
-                }
+                _fileStream.Seek((int)inode.NextRecordToInsertPointer, SeekOrigin.Begin);
+                _fileStream.Write(buffer, 0, buffer.Length);
+                inode.NextRecordToInsertPointer = (uint)_fileStream.Position;
+                WriteInode(inode);
             }
-
-            WriteSuperBlock();
-            WriteBitmap();
-            WriteInode(inode);
-        }
-
-        private uint GetBlockPointerPosition(uint blockBase)
-        {
-            return blockBase + (uint)Disk.Structures.Super.BytesAvailablePerBlock;
-        }
-
-        private byte[] ConvertRecordValuesToByteArray(List<ValueNode> values, List<ColumnMetadata> columns)
-        {
-            var buffer = new List<byte>();
-
-            for (var i = 0; i < columns.Count; i++)
+            else
             {
-                if (!(values[i].Value is StringNode))
+                var remainingSpace = blockPointer - inode.NextRecordToInsertPointer;
+                var newBlocksCount = (int)Math.Ceiling((double)(inode.RecordSize - remainingSpace) / Disk.Structures.Super.BytesAvailablePerBlock);
+                var newBlocks = ManagerUtilities.GetBlocksFromBitmap(newBlocksCount);
+
+                _fileStream.Write(buffer, 0, (int)remainingSpace);
+
+                var iterator = (int)remainingSpace;
+                for (var i = 0; i < newBlocksCount; i++)
                 {
-                    buffer.AddRange(BitConverter.GetBytes(values[i].Value.Evaluate()));
-                    continue;
+                    _fileStream.Write(BitConverter.GetBytes((uint)(newBlocks[i] * Disk.Structures.Super.BlockSize)), 0, sizeof(uint));
+                    _fileStream.Seek(newBlocks[i] * Disk.Structures.Super.BlockSize, SeekOrigin.Begin);
+
+                    var currentBlockBase = newBlocks[i] * Disk.Structures.Super.BlockSize;
+                    var recordSizeLeft = inode.RecordSize - iterator;
+
+                    blockPointer = GetBlockPointerPosition((uint) currentBlockBase);
+                    if (_fileStream.Position + recordSizeLeft <= blockPointer)
+                    {
+                        _fileStream.Write(buffer, iterator, (int) recordSizeLeft);
+                        inode.NextRecordToInsertPointer = (uint) _fileStream.Position;
+                        inode.CurrentInsertBlockBase = (uint) currentBlockBase;
+                        break;
+                    }
+
+                    remainingSpace = (uint)(blockPointer - _fileStream.Position);
+                    _fileStream.Write(buffer, iterator, (int)remainingSpace);
+                    iterator += (int)remainingSpace;
                 }
 
-                var stringValue = values[i].Value.Evaluate();
-                var byteArray = new byte[columns[i].Type.Size];
-                for (var x = 0; x < stringValue.Length; x++)
-                {
-                    byteArray[x] = (byte) stringValue[x];
-                }
-
-                buffer.AddRange(byteArray);
+                WriteSuperBlock();
+                WriteBitmap();
+                WriteInode(inode);
             }
-
-            return buffer.ToArray();
-        }
-
-        private byte[] CharArrayToByteArray(char[] arr)
-        {
-            return arr.Select(t => (byte)t).ToArray();
-        }
-
-        private char[] ByteArrayToCharArray(byte[] arr, int length, int position)
-        {
-            var buffer = new char[length];
-
-            for (var i = 0; i < length; i++)
-            {
-                buffer[i] = (char) arr[position + i];
-            }
-
-            return buffer;
         }
 
         public void ConnectDatabase(string name)
@@ -332,6 +298,59 @@ namespace DBCLICore
         public void CloseStream()
         {
             _fileStream.Dispose();
+        }
+
+        private uint GetBlockPointerPosition(uint blockBase)
+        {
+            return blockBase + (uint)Disk.Structures.Super.BytesAvailablePerBlock;
+        }
+
+        private byte[] ConvertRecordValuesToByteArray(List<ValueNode> values, List<ColumnMetadata> columns)
+        {
+            var buffer = new List<byte>();
+
+            for (var i = 0; i < columns.Count; i++)
+            {
+                if (!(values[i].Value is StringNode))
+                {
+                    buffer.AddRange(BitConverter.GetBytes(values[i].Value.Evaluate()));
+                    continue;
+                }
+
+                var stringValue = values[i].Value.Evaluate();
+                var byteArray = CharArrayToByteArray(stringValue, columns[i].Type.Size);
+                buffer.AddRange(byteArray);
+            }
+
+            return buffer.ToArray();
+        }
+
+        private byte[] CharArrayToByteArray(char[] arr)
+        {
+            return arr.Select(t => (byte)t).ToArray();
+        }
+
+        private byte[] CharArrayToByteArray(string value, int size)
+        {
+            var buffer = new byte[size];
+            for (var i = 0; i < value.Length; i++)
+            {
+                buffer[i] = (byte) value[i];
+            }
+
+            return buffer;
+        }
+
+        private char[] ByteArrayToCharArray(byte[] arr, int length, int position)
+        {
+            var buffer = new char[length];
+
+            for (var i = 0; i < length; i++)
+            {
+                buffer[i] = (char)arr[position + i];
+            }
+
+            return buffer;
         }
     }
 }
