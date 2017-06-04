@@ -160,5 +160,10 @@ namespace DBCLICore
         {
             _databaseManager.DropTable(node.Name.ToString());
         }
+
+        public void InsertRecord(InsertNode node)
+        {
+            _databaseManager.InsertRecords(node);
+        }
     }
 }

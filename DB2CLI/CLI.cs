@@ -57,6 +57,7 @@ namespace DB2CLI
             else if(node is DisconnectDatabaseNode) _database.DisconnectDatabase();
             else if(node is CreateTableNode) _database.CreateTable((CreateTableNode)node);
             else if(node is DropTableNode) _database.DropTable((DropTableNode)node);
+            else if (node is InsertNode) _database.InsertRecord((InsertNode)node);
             else if(node is AllTablesNode) _database.ShowTables();
             else if(node is SuperNode) _database.ShowSuperBlock();
         }

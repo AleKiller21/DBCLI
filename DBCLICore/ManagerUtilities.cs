@@ -2,7 +2,9 @@
 using System.Linq;
 using DBCLICore.Exceptions;
 using DBCLICore.Models;
+using SqlParser.SyntaxAnalyser.Nodes.LiteralNodes;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.CreateNodes;
+using SqlParser.SyntaxAnalyser.Nodes.TypeNodes;
 
 namespace DBCLICore
 {
@@ -35,6 +37,7 @@ namespace DBCLICore
                 }
 
                 if (extractedBlocks.Count == amount) break;
+                wordsOccupied++;
             }
 
             if (extractedBlocks.Count == 0) throw new NotEnoughFreeBlocksException();
@@ -85,7 +88,7 @@ namespace DBCLICore
 
         public static DirectoryEntry GetDirectoryEntry(string tableName)
         {
-            return Disk.Structures.Directory.First(entry => CharArrayToString(entry.Name).Equals(tableName));
+            return Disk.Structures.Directory.FirstOrDefault(entry => CharArrayToString(entry.Name).Equals(tableName));
         }
 
         public static Inode GetInode(int inumber)
@@ -162,6 +165,28 @@ namespace DBCLICore
                     Disk.Structures.Super.UsedBlocks--;
                     break;
                 }
+            }
+        }
+
+        public static void CheckNewRecordConsistency(int inumber, List<ValueNode> nodeValues)
+        {
+            var inode = GetInode(inumber);
+            if (inode.Columns.Count != nodeValues.Count) throw new MismatchInColumnAndValuesCount();
+
+            for (var i = 0; i < inode.Columns.Count; i++)
+            {
+                var columnType = inode.Columns[i].Type;
+                if (columnType is StringTypeNode && !(nodeValues[i].Value is StringNode))
+                {
+                    throw new ColumnTypeMismatchException("char");
+                }
+                if (columnType is StringTypeNode && nodeValues[i].Value is StringNode)
+                {
+                    if(((string)nodeValues[i].Value.Evaluate()).Length > columnType.Size)
+                        throw new ColumnSizeMismatchException(columnType.Size);
+                }
+                if(columnType is IntTypeNode && !(nodeValues[i].Value is IntNode)) throw new ColumnTypeMismatchException("int");
+                if(columnType is DoubleTypeNode && !(nodeValues[i].Value is DoubleNode)) throw new ColumnTypeMismatchException("double");
             }
         }
     }

@@ -38,6 +38,7 @@ namespace DBCLICore
 
             Disk.CurrentDatabase = ManagerUtilities.GetQualifiedName(name);
             _reader.ConnectDatabase(Disk.CurrentDatabase);
+
             _connection = true;
         }
 
@@ -99,9 +100,12 @@ namespace DBCLICore
             FlushDisk(entry, inode);
         }
 
-        public void InsertRecords()
+        public void InsertRecords(InsertNode node)
         {
-            
+            var entry = ManagerUtilities.GetDirectoryEntry(node.TargetTable.ToString());
+            if (entry == null) throw new TableNotFoundException();
+
+            ManagerUtilities.CheckNewRecordConsistency(entry.Inode, node.Values);
         }
 
         public List<string> ShowTables()
