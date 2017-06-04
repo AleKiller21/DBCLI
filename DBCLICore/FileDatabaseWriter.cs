@@ -112,6 +112,8 @@ namespace DBCLICore
                 _writer.Write(inode.RecordsAdded);
                 _writer.Write(inode.TableInfoBlockPointer);
                 _writer.Write(inode.DataBlockPointer);
+                _writer.Write(inode.NextRecordToInsertPointer);
+                _writer.Write(inode.CurrentInsertBlockBase);
                 _writer.Write(inode.Number);
                 _writer.Write(inode.ColumnCount);
             }
@@ -148,6 +150,8 @@ namespace DBCLICore
                 _writer.Write(inode.RecordsAdded);
                 _writer.Write(inode.TableInfoBlockPointer);
                 _writer.Write(inode.DataBlockPointer);
+                _writer.Write(inode.NextRecordToInsertPointer);
+                _writer.Write(inode.CurrentInsertBlockBase);
                 _writer.Write(inode.Number);
                 _writer.Write(inode.ColumnCount);
 

@@ -12,12 +12,14 @@ namespace DBCLICore.Models
         public uint RecordsAdded;
         public uint TableInfoBlockPointer;
         public uint DataBlockPointer;
+        public uint NextRecordToInsertPointer;
+        public uint CurrentInsertBlockBase;
         public int Number;
         public int ColumnCount;
 
         public static int Size()
         {
-            return sizeof(int) * 6 + sizeof(bool);
+            return sizeof(int) * 8 + sizeof(bool);
         }
     }
 }

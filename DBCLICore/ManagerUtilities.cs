@@ -53,6 +53,8 @@ namespace DBCLICore
 
                 inode.Available = false;
                 inode.DataBlockPointer = (uint) (blocks[0] * Disk.Structures.Super.BlockSize);
+                inode.CurrentInsertBlockBase = inode.DataBlockPointer;
+                inode.NextRecordToInsertPointer = inode.DataBlockPointer;
                 inode.TableInfoBlockPointer = (uint) (blocks[1] * Disk.Structures.Super.BlockSize);
                 inode.RecordSize = (uint) ManagerUtilities.CalculateRecordSize(columns);
                 inode.Columns = SetUpInodeColumns(columns);

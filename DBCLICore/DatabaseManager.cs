@@ -99,6 +99,11 @@ namespace DBCLICore
             FlushDisk(entry, inode);
         }
 
+        public void InsertRecords()
+        {
+            
+        }
+
         public List<string> ShowTables()
         {
             if(!_connection) throw new SessionNotCreatedException();

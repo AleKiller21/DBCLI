@@ -103,6 +103,8 @@ namespace DBCLICore
                     RecordsAdded = _reader.ReadUInt32(),
                     TableInfoBlockPointer = _reader.ReadUInt32(),
                     DataBlockPointer = _reader.ReadUInt32(),
+                    NextRecordToInsertPointer = _reader.ReadUInt32(),
+                    CurrentInsertBlockBase = _reader.ReadUInt32(),
                     Number = _reader.ReadInt32(),
                     ColumnCount = _reader.ReadInt32(),
                     Columns = new List<ColumnMetadata>()
