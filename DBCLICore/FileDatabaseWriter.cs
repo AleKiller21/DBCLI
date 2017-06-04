@@ -5,6 +5,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using DBCLICore.Models;
+using SqlParser.SyntaxAnalyser.Nodes.LiteralNodes;
+using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.CreateNodes;
 
 namespace DBCLICore
 {
@@ -182,6 +184,72 @@ namespace DBCLICore
                 _writer.Write(entry.Inode);
                 _writer.Write(entry.Number);
             }
+        }
+
+        public void WriteNewRecord(Inode inode, List<ValueNode> values)
+        {
+            var blockPointer = GetBlockPointerPosition(inode.CurrentInsertBlockBase);
+            using (_writer = new BinaryWriter(File.Open(Disk.CurrentDatabase, FileMode.Open)))
+            {
+                if (inode.NextRecordToInsertPointer + inode.RecordSize < blockPointer)
+                {
+                    _writer.Seek((int)inode.NextRecordToInsertPointer, SeekOrigin.Begin);
+                    _writer.Write(ConvertRecordValuesToByteArray(values, inode.Columns));
+                    inode.NextRecordToInsertPointer = (uint)_writer.BaseStream.Position;
+                    //WriteInode(inode);
+                }
+                else
+                {
+                    var remainingSpace = blockPointer - inode.NextRecordToInsertPointer;
+                    var buffer = ConvertRecordValuesToByteArray(values, inode.Columns);
+                    var newBlock = ManagerUtilities.GetBlocksFromBitmap(1);
+
+                    //TODO Permitir escribir el registro recursivamente en multiples bloques en caso de que el RecordSize lo demande
+                    _writer.Write(buffer, 0, (int)remainingSpace);
+                    _writer.Write((uint)(newBlock[0] * Disk.Structures.Super.BlockSize));
+                    _writer.Seek(newBlock[0] * Disk.Structures.Super.BlockSize, SeekOrigin.Begin);
+                    _writer.Write(buffer, (int)remainingSpace, buffer.Length - (int)remainingSpace);
+
+                    inode.NextRecordToInsertPointer = (uint)_writer.BaseStream.Position;
+                    inode.CurrentInsertBlockBase = (uint)(newBlock[0] * Disk.Structures.Super.BlockSize);
+                    Disk.Structures.Super.UsedBlocks++;
+                    Disk.Structures.Super.FreeBlocks--;
+                }
+            }
+
+            WriteSuperBlock();
+            WriteBitmap();
+            WriteInode(inode);
+        }
+
+        private uint GetBlockPointerPosition(uint blockBase)
+        {
+            return blockBase + (uint)Disk.Structures.Super.BytesAvailablePerBlock;
+        }
+
+        private byte[] ConvertRecordValuesToByteArray(List<ValueNode> values, List<ColumnMetadata> columns)
+        {
+            var buffer = new List<byte>();
+
+            for (var i = 0; i < columns.Count; i++)
+            {
+                if (!(values[i].Value is StringNode))
+                {
+                    buffer.AddRange(BitConverter.GetBytes(values[i].Value.Evaluate()));
+                    continue;
+                }
+
+                var stringValue = values[i].Value.Evaluate();
+                var byteArray = new byte[columns[i].Type.Size];
+                for (var x = 0; x < stringValue.Length; x++)
+                {
+                    byteArray[x] = (byte) stringValue[x];
+                }
+
+                buffer.AddRange(byteArray);
+            }
+
+            return buffer.ToArray();
         }
     }
 }

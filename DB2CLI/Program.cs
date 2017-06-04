@@ -14,13 +14,15 @@ namespace DB2CLI
         {
             var cli = new CLI();
             cli.Start();
-            //var buffer = BitConverter.GetBytes(45.8);
-            //Console.WriteLine(BitConverter.ToDouble(buffer, 0));
-            //Console.WriteLine(BitConverter.IsLittleEndian ? "Little" : " Big");
-            //foreach (var c in "hello")
+
+            //var arr = new byte[4];
+            //var x = "hell";
+            //for (var i = 0; i < x.Length; i++)
             //{
-            //    Console.WriteLine((byte)c);
+            //    arr[i] = (byte) x[i];
             //}
+
+            //Console.WriteLine(BitConverter.ToString(arr));
         }
     }
 }

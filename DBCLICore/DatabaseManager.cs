@@ -106,6 +106,7 @@ namespace DBCLICore
             if (entry == null) throw new TableNotFoundException();
 
             ManagerUtilities.CheckNewRecordConsistency(entry.Inode, node.Values);
+            _writer.WriteNewRecord(ManagerUtilities.GetInode(entry.Inode), node.Values);
         }
 
         public List<string> ShowTables()
