@@ -40,15 +40,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ColumnSizeMismatchException.cs" />
+    <Compile Include="Exceptions\ColumnSizeMismatchException.cs" />
     <Compile Include="Exceptions\ColumnTypeMismatchException.cs" />
     <Compile Include="Exceptions\ColumnSizeOutOfRangeException.cs" />
     <Compile Include="DatabaseManager.cs" />
     <Compile Include="Disk.cs" />
     <Compile Include="FileDatabase.cs" />
-    <Compile Include="FileDatabaseReader.cs" />
     <Compile Include="FileDatabaseStructures.cs" />
-    <Compile Include="FileDatabaseWriter.cs" />
+    <Compile Include="FileDatabaseStream.cs" />
     <Compile Include="ManagerUtilities.cs" />
     <Compile Include="Exceptions\MismatchInColumnAndValuesCount.cs" />
     <Compile Include="Models\ColumnMetadata.cs" />

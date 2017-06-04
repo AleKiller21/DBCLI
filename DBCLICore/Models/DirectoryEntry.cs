@@ -1,4 +1,6 @@
-﻿using System.Text;
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
 
 namespace DBCLICore.Models
 {
@@ -15,6 +17,23 @@ namespace DBCLICore.Models
             Name = new char[NameSize];
             Inode = -1;
             Available = true;
+        }
+
+        public byte[] ToByteArray()
+        {
+            var buffer = new List<byte>();
+            var byteCharArray = new byte[NameSize];
+
+            for (var i = 0; i < Name.Length; i++)
+            {
+                byteCharArray[i] = (byte)Name[i];
+            }
+            buffer.AddRange(byteCharArray);
+            buffer.AddRange(BitConverter.GetBytes(Available));
+            buffer.AddRange(BitConverter.GetBytes(Inode));
+            buffer.AddRange(BitConverter.GetBytes(Number));
+
+            return buffer.ToArray();
         }
 
         public static int Size()

@@ -21,5 +21,47 @@ namespace DBCLICore.Models
         {
             return sizeof(int) * 8 + sizeof(bool);
         }
+
+        public byte[] ToByteArray()
+        {
+            var buffer = new List<byte>();
+
+            buffer.AddRange(BitConverter.GetBytes(Available));
+            buffer.AddRange(BitConverter.GetBytes(RecordSize));
+            buffer.AddRange(BitConverter.GetBytes(RecordsAdded));
+            buffer.AddRange(BitConverter.GetBytes(TableInfoBlockPointer));
+            buffer.AddRange(BitConverter.GetBytes(DataBlockPointer));
+            buffer.AddRange(BitConverter.GetBytes(NextRecordToInsertPointer));
+            buffer.AddRange(BitConverter.GetBytes(CurrentInsertBlockBase));
+            buffer.AddRange(BitConverter.GetBytes(Number));
+            buffer.AddRange(BitConverter.GetBytes(ColumnCount));
+
+            return buffer.ToArray();
+        }
+
+        public static Inode GetFromByteArray(byte[] buffer, int offset)
+        {
+            var inode = new Inode();
+
+            inode.Available = BitConverter.ToBoolean(buffer, offset++);
+            inode.RecordSize = BitConverter.ToUInt32(buffer, offset);
+            offset += sizeof(uint);
+            inode.RecordsAdded = BitConverter.ToUInt32(buffer, offset);
+            offset += sizeof(uint);
+            inode.TableInfoBlockPointer = BitConverter.ToUInt32(buffer, offset);
+            offset += sizeof(uint);
+            inode.DataBlockPointer = BitConverter.ToUInt32(buffer, offset);
+            offset += sizeof(uint);
+            inode.NextRecordToInsertPointer = BitConverter.ToUInt32(buffer, offset);
+            offset += sizeof(uint);
+            inode.CurrentInsertBlockBase = BitConverter.ToUInt32(buffer, offset);
+            offset += sizeof(uint);
+            inode.Number = BitConverter.ToInt32(buffer, offset);
+            offset += sizeof(int);
+            inode.ColumnCount = BitConverter.ToInt32(buffer, offset);
+            offset += sizeof(int);
+
+            return inode;
+        }
     }
 }

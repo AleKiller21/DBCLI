@@ -14,14 +14,12 @@ namespace DBCLICore
     public class DatabaseManager
     {
         private bool _connection;
-        private readonly FileDatabaseWriter _writer;
-        private readonly FileDatabaseReader _reader;
+        private readonly FileDatabaseStream _fileStream;
 
         public DatabaseManager()
         {
             _connection = false;
-            _writer = new FileDatabaseWriter();
-            _reader = new FileDatabaseReader();
+            _fileStream = new FileDatabaseStream();
         }
 
         public void CreateDatabase(string name, long size, UnitSize unit)
@@ -29,7 +27,7 @@ namespace DBCLICore
             size = ManagerUtilities.ConvertToBytes(size, unit);
 
             if (!ManagerUtilities.CheckIfSizeDivisibleByTwo(size)) throw new NotDivisibleByTwoException(size);
-            _writer.CreateDatabase(ManagerUtilities.GetQualifiedName(name), size, 512);
+            _fileStream.CreateDatabase(ManagerUtilities.GetQualifiedName(name), size, 512);
         }
 
         public void ConnectDatabase(string name)
@@ -37,7 +35,7 @@ namespace DBCLICore
             if (_connection) throw new SessionActiveException($"You already established a session to {name} database");
 
             Disk.CurrentDatabase = ManagerUtilities.GetQualifiedName(name);
-            _reader.ConnectDatabase(Disk.CurrentDatabase);
+            _fileStream.ConnectDatabase(Disk.CurrentDatabase);
 
             _connection = true;
         }
@@ -53,6 +51,8 @@ namespace DBCLICore
             Disk.Structures = null;
             Disk.CurrentDatabase = "";
             _connection = false;
+
+            _fileStream.CloseStream();
         }
 
         public void DropDatabase(string name)
@@ -106,7 +106,7 @@ namespace DBCLICore
             if (entry == null) throw new TableNotFoundException();
 
             ManagerUtilities.CheckNewRecordConsistency(entry.Inode, node.Values);
-            _writer.WriteNewRecord(ManagerUtilities.GetInode(entry.Inode), node.Values);
+            _fileStream.WriteNewRecord(ManagerUtilities.GetInode(entry.Inode), node.Values);
         }
 
         public List<string> ShowTables()
@@ -142,10 +142,10 @@ namespace DBCLICore
 
         private void FlushDisk(DirectoryEntry entry, Inode inode)
         {
-            _writer.WriteSuperBlock();
-            _writer.WriteBitmap();
-            _writer.WriteDirectoryEntry(entry);
-            _writer.WriteInode(inode);
+            _fileStream.WriteSuperBlock();
+            _fileStream.WriteBitmap();
+            _fileStream.WriteDirectoryEntry(entry);
+            _fileStream.WriteInode(inode);
         }
     }
 }

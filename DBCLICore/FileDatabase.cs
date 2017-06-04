@@ -55,24 +55,25 @@ namespace DBCLICore
 
         public void ConnectDatabase(ConnectionNode node)
         {
-            try
-            {
-                _databaseManager.ConnectDatabase(node.DatabaseName.ToString());
-                Console.WriteLine($"A session to {node.DatabaseName} has been created.");
-            }
-            catch (SessionActiveException e)
-            {
-                Console.WriteLine(e.Message);
-            }
-            catch (FileNotFoundException e)
-            {
-                Console.WriteLine("No such database exists!");
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("An error has occurred! Here is more info:");
-                Console.WriteLine(e.Message);
-            }
+            _databaseManager.ConnectDatabase(node.DatabaseName.ToString());
+            //try
+            //{
+            //    _databaseManager.ConnectDatabase(node.DatabaseName.ToString());
+            //    Console.WriteLine($"A session to {node.DatabaseName} has been created.");
+            //}
+            //catch (SessionActiveException e)
+            //{
+            //    Console.WriteLine(e.Message);
+            //}
+            //catch (FileNotFoundException e)
+            //{
+            //    Console.WriteLine("No such database exists!");
+            //}
+            //catch (Exception e)
+            //{
+            //    Console.WriteLine("An error has occurred! Here is more info:");
+            //    Console.WriteLine(e.Message);
+            //}
         }
 
         public void DisconnectDatabase()
