@@ -10,6 +10,7 @@ using SqlParser.SyntaxAnalyser.Nodes;
 using SqlParser.SyntaxAnalyser.Nodes.ExpressionNodes;
 using SqlParser.SyntaxAnalyser.Nodes.Operators;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.CreateNodes;
+using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.DeleteNodes;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.DropNodes;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.SelectNodes;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.UpdateNodes;
@@ -137,6 +138,46 @@ namespace DBCLICore
             }
         }
 
+        public void DeleteRecords(DeleteNode node)
+        {
+            var entry = GetDirectoryEntry(node.SourceTable.ToString());
+            var inode = ManagerUtilities.GetInode(entry.Inode);
+
+            var selection = node.Selection as UnaryExpressionNode;
+            if (selection == null) _fileStream.DeleteAllRecords(inode);
+        }
+
+        public List<string> ShowTables()
+        {
+            if(!_connection) throw new SessionNotCreatedException();
+
+            var entries = Disk.Structures.Directory.Where(entry => !entry.Available).ToList();
+            var prints = new List<string>();
+
+            foreach (var entry in entries)
+            {
+                var inode = Disk.Structures.Inodes.First(ind => ind.Number == entry.Inode);
+                var recordSize = inode.RecordSize;
+                var totaRecords = inode.RecordsAdded;
+
+                foreach (var column in inode.Columns)
+                {
+                    prints.Add(
+                        $"|{new string(entry.Name).Replace("\0", string.Empty),20}|{new string(column.Name).Replace("\0", string.Empty),20}|{column.Type,20}|{column.Type.Size,20}|{recordSize,20}|{totaRecords,20}|");
+                }
+            }
+
+            return prints;
+        }
+
+        public List<string> ShowSuperBlock()
+        {
+            if(!_connection) throw new SessionNotCreatedException();
+
+            return Disk.Structures.Super.GetType().GetFields()
+                .Select(field => $"{field.Name}: {field.GetValue(Disk.Structures.Super)}").ToList();
+        }
+
         private void UpdateRecordsWithSelection(UpdateNode node, Inode inode, List<Record> records, UnaryExpressionNode selection)
         {
             var expression = selection.Expression;
@@ -179,37 +220,6 @@ namespace DBCLICore
                     record.Values[columnPos].Value = update.Value;
                 }
             }
-        }
-
-        public List<string> ShowTables()
-        {
-            if(!_connection) throw new SessionNotCreatedException();
-
-            var entries = Disk.Structures.Directory.Where(entry => !entry.Available).ToList();
-            var prints = new List<string>();
-
-            foreach (var entry in entries)
-            {
-                var inode = Disk.Structures.Inodes.First(ind => ind.Number == entry.Inode);
-                var recordSize = inode.RecordSize;
-                var totaRecords = inode.RecordsAdded;
-
-                foreach (var column in inode.Columns)
-                {
-                    prints.Add(
-                        $"|{new string(entry.Name).Replace("\0", string.Empty),20}|{new string(column.Name).Replace("\0", string.Empty),20}|{column.Type,20}|{column.Type.Size,20}|{recordSize,20}|{totaRecords,20}|");
-                }
-            }
-
-            return prints;
-        }
-
-        public List<string> ShowSuperBlock()
-        {
-            if(!_connection) throw new SessionNotCreatedException();
-
-            return Disk.Structures.Super.GetType().GetFields()
-                .Select(field => $"{field.Name}: {field.GetValue(Disk.Structures.Super)}").ToList();
         }
 
         private void FlushDisk(DirectoryEntry entry, Inode inode)

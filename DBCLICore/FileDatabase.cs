@@ -4,6 +4,7 @@ using System.Linq;
 using DBCLICore.Exceptions;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.CreateNodes;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.DatabaseConnectionNodes;
+using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.DeleteNodes;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.DropNodes;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.SelectNodes;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.UpdateNodes;
@@ -183,6 +184,11 @@ namespace DBCLICore
         public void UpdateRecord(UpdateNode node)
         {
             _databaseManager.UpdateRecords(node);
+        }
+
+        public void DeleteRecord(DeleteNode node)
+        {
+            _databaseManager.DeleteRecords(node);
         }
     }
 }

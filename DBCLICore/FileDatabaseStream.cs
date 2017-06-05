@@ -237,6 +237,34 @@ namespace DBCLICore
             return ConvertByteArrayToRecords(bufferList.ToArray(), inode.Columns);
         }
 
+        public void DeleteAllRecords(Inode inode)
+        {
+            _fileStream.Seek(inode.DataBlockPointer, SeekOrigin.Begin);
+            while (_fileStream.Position != inode.CurrentInsertBlockBase)
+            {
+                if (_fileStream.Position != inode.DataBlockPointer)
+                {
+                    var blockNumber = _fileStream.Position / Disk.Structures.Super.BlockSize;
+                    ManagerUtilities.FreeBlocks(new List<int> { (int)blockNumber });
+                }
+
+                var pointer = new byte[sizeof(uint)];
+                _fileStream.Seek(Disk.Structures.Super.BytesAvailablePerBlock, SeekOrigin.Current);
+                _fileStream.Read(pointer, 0, pointer.Length);
+                _fileStream.Seek(BitConverter.ToUInt32(pointer, 0), SeekOrigin.Begin);
+            }
+
+            if (_fileStream.Position != inode.DataBlockPointer)
+            {
+                var blockNumber = _fileStream.Position / Disk.Structures.Super.BlockSize;
+                ManagerUtilities.FreeBlocks(new List<int> { (int)blockNumber });
+            }
+
+            inode.NextRecordToInsertPointer = inode.DataBlockPointer;
+            inode.CurrentInsertBlockBase = inode.DataBlockPointer;
+            WriteInode(inode);
+        }
+
         public void UpdateAllRecords(Inode inode, List<Record> records)
         {
             var bufferList = new List<byte>();
