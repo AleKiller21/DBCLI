@@ -269,6 +269,77 @@ namespace DBCLICore
             WriteInode(inode);
         }
 
+        public void DeleteRecordsWithSelection(Inode inode, List<Record> aliveRecords)
+        {
+            var bufferList = new List<byte>();
+            foreach (var record in aliveRecords)
+            {
+                bufferList.AddRange(ConvertRecordValuesToByteArray(record.Values, inode.Columns));
+            }
+
+            _fileStream.Seek(inode.DataBlockPointer, SeekOrigin.Begin);
+            var buffer = bufferList.ToArray();
+            var iterator = 0;
+            var recordSizeLeft = buffer.Length - iterator;
+            var blockPointer = _fileStream.Position + Disk.Structures.Super.BytesAvailablePerBlock;
+            while (recordSizeLeft != 0)
+            {
+                if (_fileStream.Position + recordSizeLeft <= blockPointer)
+                {
+                    _fileStream.Write(buffer, iterator, recordSizeLeft);
+                    iterator += recordSizeLeft;
+                    recordSizeLeft = 0;
+                }
+                else
+                {
+                    var pointerBuffer = new byte[sizeof(uint)];
+                    var remainingBlockSpace = (int)(blockPointer - _fileStream.Position);
+                    _fileStream.Write(buffer, iterator, remainingBlockSpace);
+                    _fileStream.Read(pointerBuffer, 0, pointerBuffer.Length);
+                    _fileStream.Seek(BitConverter.ToUInt32(pointerBuffer, 0), SeekOrigin.Begin);
+                    blockPointer = _fileStream.Position + Disk.Structures.Super.BytesAvailablePerBlock;
+                    iterator += remainingBlockSpace;
+                    recordSizeLeft -= remainingBlockSpace;
+                }
+            }
+
+            if (blockPointer - Disk.Structures.Super.BytesAvailablePerBlock == inode.CurrentInsertBlockBase)
+            {
+                inode.NextRecordToInsertPointer = (uint) _fileStream.Position;
+                WriteInode(inode);
+                return;
+            }
+
+            var pointer = new byte[sizeof(uint)];
+            var nextRecordToInsertPointer = _fileStream.Position;
+            var currentBlockBasePointer = blockPointer - Disk.Structures.Super.BytesAvailablePerBlock;
+
+            _fileStream.Seek(blockPointer - _fileStream.Position, SeekOrigin.Current);
+            _fileStream.Read(pointer, 0, pointer.Length);
+            _fileStream.Seek(BitConverter.ToUInt32(pointer, 0), SeekOrigin.Begin);
+
+            long blockNumber;
+            while (_fileStream.Position != inode.CurrentInsertBlockBase)
+            {
+                blockNumber = _fileStream.Position / Disk.Structures.Super.BlockSize;
+                ManagerUtilities.FreeBlocks(new List<int> { (int)blockNumber });
+
+                pointer = new byte[sizeof(uint)];
+                _fileStream.Seek(Disk.Structures.Super.BytesAvailablePerBlock, SeekOrigin.Current);
+                _fileStream.Read(pointer, 0, pointer.Length);
+                _fileStream.Seek(BitConverter.ToUInt32(pointer, 0), SeekOrigin.Begin);
+            }
+
+            blockNumber = _fileStream.Position / Disk.Structures.Super.BlockSize;
+            ManagerUtilities.FreeBlocks(new List<int> { (int)blockNumber });
+            inode.CurrentInsertBlockBase = (uint)currentBlockBasePointer;
+            inode.NextRecordToInsertPointer = (uint)nextRecordToInsertPointer;
+
+            WriteSuperBlock();
+            WriteBitmap();
+            WriteInode(inode);
+        }
+
         public void UpdateAllRecords(Inode inode, List<Record> records)
         {
             var bufferList = new List<byte>();

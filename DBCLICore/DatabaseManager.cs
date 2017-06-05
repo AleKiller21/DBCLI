@@ -145,6 +145,25 @@ namespace DBCLICore
 
             var selection = node.Selection as UnaryExpressionNode;
             if (selection == null) _fileStream.DeleteAllRecords(inode);
+            else DeleteRecordsWithSelection(node, inode);
+        }
+
+        private void DeleteRecordsWithSelection(DeleteNode node, Inode inode)
+        {
+            var records = _fileStream.ReadRecords(inode);
+            var expression = node.Selection as UnaryExpressionNode;
+            var selectionColumn = expression.Expression.LeftOperand.ToString();
+            var aliveRecords = new List<Record>();
+            var columnPos = ManagerUtilities.GetColumnPosition(inode, selectionColumn);
+
+            foreach (var record in records)
+            {
+                var value = record.Values[columnPos].Value.Evaluate();
+                if (value is string) value = ((string)value).Replace("\0", string.Empty);
+                if (!expression.Expression.Evaluate(value)) aliveRecords.Add(new Record { Values = record.Values});
+            }
+
+            _fileStream.DeleteRecordsWithSelection(inode, aliveRecords);
         }
 
         public List<string> ShowTables()
