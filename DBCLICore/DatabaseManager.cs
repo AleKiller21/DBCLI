@@ -12,6 +12,7 @@ using SqlParser.SyntaxAnalyser.Nodes.Operators;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.CreateNodes;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.DropNodes;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.SelectNodes;
+using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.UpdateNodes;
 
 namespace DBCLICore
 {
@@ -88,7 +89,7 @@ namespace DBCLICore
 
         public void DropTable(string tableName)
         {
-            var entry = ManagerUtilities.GetDirectoryEntry(tableName);
+            var entry = GetDirectoryEntry(tableName);
             entry.Available = true;
             Array.Clear(entry.Name, 0, entry.Name.Length);
 
@@ -106,8 +107,7 @@ namespace DBCLICore
 
         public void InsertRecords(InsertNode node)
         {
-            var entry = ManagerUtilities.GetDirectoryEntry(node.TargetTable.ToString());
-            if (entry == null) throw new TableNotFoundException();
+            var entry = GetDirectoryEntry(node.TargetTable.ToString());
 
             ManagerUtilities.CheckNewRecordConsistency(entry.Inode, node.Values);
             _fileStream.WriteNewRecord(ManagerUtilities.GetInode(entry.Inode), node.Values);
@@ -115,12 +115,45 @@ namespace DBCLICore
 
         public List<string> SelectRecords(SelectNode node)
         {
-            var entry = ManagerUtilities.GetDirectoryEntry(node.SourceTable.ToString());
-            if (entry == null) throw new TableNotFoundException();
+            var entry = GetDirectoryEntry(node.SourceTable.ToString());
 
             var inode = ManagerUtilities.GetInode(entry.Inode);
             var records = _fileStream.ReadRecords(inode);
             return ProyectSelection(records, inode.Columns, node.Columns, node.Selection);
+        }
+
+        public void UpdateRecords(UpdateNode node)
+        {
+            var entry = GetDirectoryEntry(node.SourceTable.ToString());
+            var inode = ManagerUtilities.GetInode(entry.Inode);
+            var records = _fileStream.ReadRecords(inode);
+
+            var selection = node.Selection as UnaryExpressionNode;
+            //if (selection == null) //TODO Update record without selection
+
+            var expression = selection.Expression;
+            var selectionColumn = expression.LeftOperand.ToString();
+            var updatedRecords = new List<UpdatedRecord>();
+            var columnPos = ManagerUtilities.GetColumnPosition(inode, selectionColumn);
+
+            for (var i = 0; i < records.Count; i++)
+            {
+                var value = records[i].Values[columnPos].Value.Evaluate();
+                if (value is string) value = ((string)value).Replace("\0", string.Empty);
+                if (expression.Evaluate(value)) updatedRecords.Add(new UpdatedRecord { Record = records[i], RecordNumber = i });
+            }
+
+            if (updatedRecords.Count == 0) throw new RecordMismatchSelection();
+            foreach (var update in node.Updates)
+            {
+                columnPos = ManagerUtilities.GetColumnPosition(inode, update.Column.ToString());
+                foreach (var record in updatedRecords)
+                {
+                    record.Record.Values[columnPos].Value = update.Value;
+                }
+            }
+
+            _fileStream.UpdateRecords(inode, updatedRecords);
         }
 
         public List<string> ShowTables()
@@ -240,6 +273,14 @@ namespace DBCLICore
             }
 
             return prints;
+        }
+
+        private DirectoryEntry GetDirectoryEntry(string tableName)
+        {
+            var entry = ManagerUtilities.GetDirectoryEntry(tableName);
+            if (entry == null) throw new TableNotFoundException();
+
+            return entry;
         }
     }
 }

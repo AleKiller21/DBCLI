@@ -237,6 +237,55 @@ namespace DBCLICore
             return ConvertByteArrayToRecords(bufferList.ToArray(), inode.Columns);
         }
 
+        public void UpdateRecords(Inode inode, List<UpdatedRecord> updatedRecords)
+        {
+            _fileStream.Seek(inode.DataBlockPointer, SeekOrigin.Begin);
+            var bytesExplored = 0;
+            var blockPointer = _fileStream.Position + Disk.Structures.Super.BytesAvailablePerBlock;
+
+            foreach (var record in updatedRecords)
+            {
+                var bytesWritten = record.RecordNumber * inode.RecordSize;
+                while (bytesExplored != bytesWritten)
+                {
+                    var distanceToPointer = blockPointer - _fileStream.Position;
+                    if (bytesExplored + distanceToPointer < bytesWritten)
+                    {
+                        var pointerBuffer = new byte[sizeof(uint)];
+                        bytesExplored += (int)distanceToPointer;
+                        _fileStream.Seek(distanceToPointer, SeekOrigin.Current);
+                        _fileStream.Read(pointerBuffer, 0, pointerBuffer.Length);
+                        _fileStream.Seek(BitConverter.ToUInt32(pointerBuffer, 0), SeekOrigin.Begin);
+                        blockPointer = _fileStream.Position + Disk.Structures.Super.BytesAvailablePerBlock;
+                    }
+                    else
+                    {
+                        var difference = (int)bytesWritten - bytesExplored;
+                        bytesExplored += difference;
+                        _fileStream.Seek(difference, SeekOrigin.Current);
+                    }
+                }
+
+                var buffer = ConvertRecordValuesToByteArray(record.Record.Values, inode.Columns);
+                var iterator = 0;
+                var recordSizeLeft = inode.RecordSize - iterator;
+                while (_fileStream.Position + recordSizeLeft > blockPointer)
+                {
+                    var pointerBuffer = new byte[sizeof(uint)];
+                    var delta = blockPointer - _fileStream.Position;
+                    _fileStream.Write(buffer, iterator, (int)delta);
+                    _fileStream.Read(pointerBuffer, 0, pointerBuffer.Length);
+                    _fileStream.Seek(BitConverter.ToUInt32(pointerBuffer, 0), SeekOrigin.Begin);
+                    blockPointer = _fileStream.Position + Disk.Structures.Super.BytesAvailablePerBlock;
+                    iterator += (int)delta;
+                    bytesExplored += (int)delta;
+                    recordSizeLeft = inode.RecordSize - iterator;
+                }
+                _fileStream.Write(buffer, iterator, (int)recordSizeLeft);
+                bytesExplored += (int)recordSizeLeft;
+            }
+        }
+
         private SuperBlock ReadSuperBlock()
         {
             var buffer = new byte[SuperBlock.Size()];

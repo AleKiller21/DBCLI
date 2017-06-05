@@ -189,5 +189,16 @@ namespace DBCLICore
                 if(columnType is DoubleTypeNode && !(nodeValues[i].Value is DoubleNode)) throw new ColumnTypeMismatchException("double");
             }
         }
+
+        public static int GetColumnPosition(Inode inode, string tableName)
+        {
+            for (var i = 0; i < inode.Columns.Count; i++)
+            {
+                if (!new string(inode.Columns[i].Name).Replace("\0", string.Empty).Equals(tableName)) continue;
+                return i;
+            }
+
+            throw new ColumnNotFoundException();
+        }
     }
 }

@@ -6,6 +6,7 @@ using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.CreateNodes;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.DatabaseConnectionNodes;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.DropNodes;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.SelectNodes;
+using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.UpdateNodes;
 
 namespace DBCLICore
 {
@@ -177,6 +178,11 @@ namespace DBCLICore
                 Console.WriteLine(print);
             }
             Console.Write("\n");
+        }
+
+        public void UpdateRecord(UpdateNode node)
+        {
+            _databaseManager.UpdateRecords(node);
         }
     }
 }
