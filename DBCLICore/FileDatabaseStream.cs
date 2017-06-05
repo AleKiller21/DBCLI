@@ -262,6 +262,10 @@ namespace DBCLICore
 
             inode.NextRecordToInsertPointer = inode.DataBlockPointer;
             inode.CurrentInsertBlockBase = inode.DataBlockPointer;
+            inode.RecordsAdded = 0;
+
+            WriteSuperBlock();
+            WriteBitmap();
             WriteInode(inode);
         }
 
