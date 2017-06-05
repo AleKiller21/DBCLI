@@ -58,25 +58,25 @@ namespace DBCLICore
 
         public void ConnectDatabase(ConnectionNode node)
         {
-            _databaseManager.ConnectDatabase(node.DatabaseName.ToString());
-            //try
-            //{
-            //    _databaseManager.ConnectDatabase(node.DatabaseName.ToString());
-            //    Console.WriteLine($"A session to {node.DatabaseName} has been created.");
-            //}
-            //catch (SessionActiveException e)
-            //{
-            //    Console.WriteLine(e.Message);
-            //}
-            //catch (FileNotFoundException e)
-            //{
-            //    Console.WriteLine("No such database exists!");
-            //}
-            //catch (Exception e)
-            //{
-            //    Console.WriteLine("An error has occurred! Here is more info:");
-            //    Console.WriteLine(e.Message);
-            //}
+            //_databaseManager.ConnectDatabase(node.DatabaseName.ToString());
+            try
+            {
+                _databaseManager.ConnectDatabase(node.DatabaseName.ToString());
+                Console.WriteLine($"A session to {node.DatabaseName} has been created.");
+            }
+            catch (SessionActiveException e)
+            {
+                Console.WriteLine(e.Message);
+            }
+            catch (FileNotFoundException e)
+            {
+                Console.WriteLine("No such database exists!");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("An error has occurred! Here is more info:");
+                Console.WriteLine(e.Message);
+            }
         }
 
         public void DisconnectDatabase()
@@ -94,26 +94,26 @@ namespace DBCLICore
 
         public void CreateTable(CreateTableNode node)
         {
-            _databaseManager.CreateTable(node);
-            Console.WriteLine($"{node.Name} table has been created.");
-            //try
-            //{
-            //    _databaseManager.CreateTable(node);
-            //    Console.WriteLine($"{node.Name} table has been created.");
-            //}
-            //catch (ColumnSizeOutOfRangeException e)
-            //{
-            //    Console.WriteLine(e.Message);
-            //}
-            //catch (SessionNotCreatedException e)
-            //{
-            //    Console.WriteLine(e.Message);
-            //}
-            //catch (Exception e)
-            //{
-            //    Console.WriteLine("An error has occurred! Here is more info:");
-            //    Console.WriteLine(e.Message);
-            //}
+            //_databaseManager.CreateTable(node);
+            //Console.WriteLine($"{node.Name} table has been created.");
+            try
+            {
+                _databaseManager.CreateTable(node);
+                Console.WriteLine($"{node.Name} table has been created.");
+            }
+            catch (ColumnSizeOutOfRangeException e)
+            {
+                Console.WriteLine(e.Message);
+            }
+            catch (SessionNotCreatedException e)
+            {
+                Console.WriteLine(e.Message);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("An error has occurred! Here is more info:");
+                Console.WriteLine(e.Message);
+            }
         }
 
         public void ShowTables()
@@ -162,33 +162,72 @@ namespace DBCLICore
 
         public void DropTable(DropTableNode node)
         {
-            _databaseManager.DropTable(node.Name.ToString());
+            try
+            {
+                _databaseManager.DropTable(node.Name.ToString());
+                Console.WriteLine($"{node.Name.ToString()} table has been dropped.");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
         }
 
         public void InsertRecord(InsertNode node)
         {
-            _databaseManager.InsertRecords(node);
+            try
+            {
+                _databaseManager.InsertRecords(node);
+                Console.WriteLine($"Record has been inserted into table {node.TargetTable}.");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
         }
 
         public void SelectRecords(SelectNode node)
         {
-            var prints = _databaseManager.SelectRecords(node);
-
-            foreach (var print in prints)
+            try
             {
-                Console.WriteLine(print);
+                var prints = _databaseManager.SelectRecords(node);
+
+                foreach (var print in prints)
+                {
+                    Console.WriteLine(print);
+                }
+                Console.Write("\n");
             }
-            Console.Write("\n");
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
         }
 
         public void UpdateRecord(UpdateNode node)
         {
-            _databaseManager.UpdateRecords(node);
+            try
+            {
+                _databaseManager.UpdateRecords(node);
+                Console.WriteLine("Records have been updated.");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
         }
 
         public void DeleteRecord(DeleteNode node)
         {
-            _databaseManager.DeleteRecords(node);
+            try
+            {
+                _databaseManager.DeleteRecords(node);
+                Console.WriteLine("Deletion has been successfull.");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
         }
     }
 }

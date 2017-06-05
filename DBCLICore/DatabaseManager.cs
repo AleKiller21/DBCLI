@@ -101,7 +101,9 @@ namespace DBCLICore
             Disk.Structures.Super.FreeInodes++;
 
             var blocks = new List<int>{(int)inode.DataBlockPointer / blockSize, (int)inode.TableInfoBlockPointer / blockSize};
-            //TODO Obtener los bloques de registros de la tabla
+            
+            _fileStream.DeleteAllRecords(inode);
+
             ManagerUtilities.FreeBlocks(blocks);
             FlushDisk(entry, inode);
         }
