@@ -129,8 +129,16 @@ namespace DBCLICore
             var records = _fileStream.ReadRecords(inode);
 
             var selection = node.Selection as UnaryExpressionNode;
-            //if (selection == null) //TODO Update record without selection
+            if (selection != null) UpdateRecordsWithSelection(node, inode, records, selection);
+            else
+            {
+                UpdateAllTableRecordsInMemory(node, records, inode);
+                _fileStream.UpdateAllRecords(inode, records);
+            }
+        }
 
+        private void UpdateRecordsWithSelection(UpdateNode node, Inode inode, List<Record> records, UnaryExpressionNode selection)
+        {
             var expression = selection.Expression;
             var selectionColumn = expression.LeftOperand.ToString();
             var updatedRecords = new List<UpdatedRecord>();
@@ -144,16 +152,33 @@ namespace DBCLICore
             }
 
             if (updatedRecords.Count == 0) throw new RecordMismatchSelection();
+            UpdateRecordsInMemoryWithSelection(node, updatedRecords, inode);
+
+            _fileStream.UpdateRecordsWithSelection(inode, updatedRecords);
+        }
+
+        private void UpdateRecordsInMemoryWithSelection(UpdateNode node, List<UpdatedRecord> updatedRecords, Inode inode)
+        {
             foreach (var update in node.Updates)
             {
-                columnPos = ManagerUtilities.GetColumnPosition(inode, update.Column.ToString());
+                var columnPos = ManagerUtilities.GetColumnPosition(inode, update.Column.ToString());
                 foreach (var record in updatedRecords)
                 {
                     record.Record.Values[columnPos].Value = update.Value;
                 }
             }
+        }
 
-            _fileStream.UpdateRecords(inode, updatedRecords);
+        private void UpdateAllTableRecordsInMemory(UpdateNode node, List<Record> records, Inode inode)
+        {
+            foreach (var update in node.Updates)
+            {
+                var columnPos = ManagerUtilities.GetColumnPosition(inode, update.Column.ToString());
+                foreach (var record in records)
+                {
+                    record.Values[columnPos].Value = update.Value;
+                }
+            }
         }
 
         public List<string> ShowTables()
