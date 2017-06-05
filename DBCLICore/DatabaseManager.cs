@@ -110,12 +110,18 @@ namespace DBCLICore
             _fileStream.WriteNewRecord(ManagerUtilities.GetInode(entry.Inode), node.Values);
         }
 
-        public void SelectRecords(SelectNode node)
+        public List<string> SelectRecords(SelectNode node)
         {
             var entry = ManagerUtilities.GetDirectoryEntry(node.SourceTable.ToString());
             if (entry == null) throw new TableNotFoundException();
 
-            var records = _fileStream.ReadRecords(ManagerUtilities.GetInode(entry.Inode));
+            var inode = ManagerUtilities.GetInode(entry.Inode);
+            var records = _fileStream.ReadRecords(inode);
+            if (node.Columns[0].ToString() == "*") return SelectAllRecords(records, inode.Columns);
+            else
+            {
+                
+            }
         }
 
         public List<string> ShowTables()
@@ -155,6 +161,29 @@ namespace DBCLICore
             _fileStream.WriteBitmap();
             _fileStream.WriteDirectoryEntry(entry);
             _fileStream.WriteInode(inode);
+        }
+
+        private List<string> SelectAllRecords(List<Record> records, List<ColumnMetadata> columns)
+        {
+            return FormatProyection(records, columns);
+        }
+
+        private List<string> FormatProyection(List<Record> records, List<ColumnMetadata> columns)
+        {
+            const int width = 20;
+            var prints = new List<string>
+            {
+                "\n",
+                string.Join(string.Empty, columns.Select(column => $"{new string(column.Name).Replace("\0", string.Empty),width}|").ToList()),
+                "____________________________________________________________________________________________________________________"
+            };
+
+            foreach (var record in records)
+            {
+                prints.Add(string.Join(string.Empty, record.Values.Select(value => $"{value.Value.Evaluate().ToString().Replace("\0", string.Empty),width}|").ToList()));
+            }
+
+            return prints;
         }
     }
 }

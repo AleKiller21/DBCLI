@@ -170,7 +170,12 @@ namespace DBCLICore
 
         public void SelectRecords(SelectNode node)
         {
-            _databaseManager.SelectRecords(node);
+            var prints = _databaseManager.SelectRecords(node);
+
+            foreach (var print in prints)
+            {
+                Console.WriteLine(print);
+            }
         }
     }
 }
