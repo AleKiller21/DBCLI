@@ -8,6 +8,7 @@ using DBCLICore.Exceptions;
 using DBCLICore.Models;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.CreateNodes;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.DropNodes;
+using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.SelectNodes;
 
 namespace DBCLICore
 {
@@ -107,6 +108,14 @@ namespace DBCLICore
 
             ManagerUtilities.CheckNewRecordConsistency(entry.Inode, node.Values);
             _fileStream.WriteNewRecord(ManagerUtilities.GetInode(entry.Inode), node.Values);
+        }
+
+        public void SelectRecords(SelectNode node)
+        {
+            var entry = ManagerUtilities.GetDirectoryEntry(node.SourceTable.ToString());
+            if (entry == null) throw new TableNotFoundException();
+
+            var records = _fileStream.ReadRecords(ManagerUtilities.GetInode(entry.Inode));
         }
 
         public List<string> ShowTables()

@@ -5,6 +5,7 @@ using DBCLICore.Exceptions;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.CreateNodes;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.DatabaseConnectionNodes;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.DropNodes;
+using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.SelectNodes;
 
 namespace DBCLICore
 {
@@ -165,6 +166,11 @@ namespace DBCLICore
         public void InsertRecord(InsertNode node)
         {
             _databaseManager.InsertRecords(node);
+        }
+
+        public void SelectRecords(SelectNode node)
+        {
+            _databaseManager.SelectRecords(node);
         }
     }
 }

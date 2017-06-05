@@ -14,15 +14,6 @@ namespace DB2CLI
         {
             var cli = new CLI();
             cli.Start();
-
-            //var arr = new byte[4];
-            //var x = "hell";
-            //for (var i = 0; i < x.Length; i++)
-            //{
-            //    arr[i] = (byte) x[i];
-            //}
-
-            //Console.WriteLine(BitConverter.ToString(arr));
         }
     }
 }

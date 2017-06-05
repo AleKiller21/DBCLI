@@ -5,6 +5,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using DBCLICore.Models;
+using SqlParser.SyntaxAnalyser.Nodes;
+using SqlParser.SyntaxAnalyser.Nodes.ExpressionNodes;
 using SqlParser.SyntaxAnalyser.Nodes.LiteralNodes;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.CreateNodes;
 
@@ -154,12 +156,13 @@ namespace DBCLICore
         {
             var blockPointer = GetBlockPointerPosition(inode.CurrentInsertBlockBase);
             var buffer = ConvertRecordValuesToByteArray(values, inode.Columns);
+            _fileStream.Seek((int)inode.NextRecordToInsertPointer, SeekOrigin.Begin);
 
             if (inode.NextRecordToInsertPointer + inode.RecordSize <= blockPointer)
             {
-                _fileStream.Seek((int)inode.NextRecordToInsertPointer, SeekOrigin.Begin);
                 _fileStream.Write(buffer, 0, buffer.Length);
                 inode.NextRecordToInsertPointer = (uint)_fileStream.Position;
+                inode.RecordsAdded++;
                 WriteInode(inode);
             }
             else
@@ -185,6 +188,7 @@ namespace DBCLICore
                         _fileStream.Write(buffer, iterator, (int) recordSizeLeft);
                         inode.NextRecordToInsertPointer = (uint) _fileStream.Position;
                         inode.CurrentInsertBlockBase = (uint) currentBlockBase;
+                        inode.RecordsAdded++;
                         break;
                     }
 
@@ -208,6 +212,29 @@ namespace DBCLICore
             Disk.Structures.BitMap = ReadBitmap();
             Disk.Structures.Directory = ReadDirectory();
             Disk.Structures.Inodes = ReadInodeTable();
+        }
+
+        public List<Record> ReadRecords(Inode inode)
+        {
+            _fileStream.Seek(inode.DataBlockPointer, SeekOrigin.Begin);
+            var bufferList = new List<byte>();
+
+            while (_fileStream.Position != inode.CurrentInsertBlockBase)
+            {
+                var buffer = new byte[Disk.Structures.Super.BytesAvailablePerBlock];
+                var pointer = new byte[sizeof(uint)];
+                _fileStream.Read(buffer, 0, buffer.Length);
+                _fileStream.Read(pointer, 0, pointer.Length);
+                bufferList.AddRange(buffer);
+                _fileStream.Seek(BitConverter.ToUInt32(pointer, 0), SeekOrigin.Begin);
+            }
+
+            var difference = inode.NextRecordToInsertPointer - _fileStream.Position;
+            var finalBuffer = new byte[difference];
+            _fileStream.Read(finalBuffer, 0, (int)difference);
+            bufferList.AddRange(finalBuffer);
+
+            return ConvertByteArrayToRecords(bufferList.ToArray(), inode.Columns);
         }
 
         private SuperBlock ReadSuperBlock()
@@ -323,6 +350,42 @@ namespace DBCLICore
             }
 
             return buffer.ToArray();
+        }
+
+        private List<Record> ConvertByteArrayToRecords(byte[] buffer, List<ColumnMetadata> columns)
+        {
+            var records = new List<Record>();
+            var iterator = 0;
+
+            while (iterator < buffer.Length)
+            {
+                var record = new Record();
+                foreach (var column in columns)
+                {
+                    if (column.Type.ToString() == "int")
+                    {
+                        var value = BitConverter.ToInt32(buffer, iterator);
+                        record.Values.Add(new ValueNode { Value = new IntNode(value) });
+                        iterator += sizeof(int);
+                    }
+                    else if (column.Type.ToString() == "char")
+                    {
+                        var value = ByteArrayToCharArray(buffer, column.Type.Size, iterator);
+                        record.Values.Add(new ValueNode { Value = new StringNode(new string(value)) });
+                        iterator += column.Type.Size;
+                    }
+                    else
+                    {
+                        var value = BitConverter.ToDouble(buffer, iterator);
+                        record.Values.Add(new ValueNode { Value = new DoubleNode(value) });
+                        iterator += sizeof(double);
+                    }
+                }
+
+                records.Add(record);
+            }
+
+            return records;
         }
 
         private byte[] CharArrayToByteArray(char[] arr)

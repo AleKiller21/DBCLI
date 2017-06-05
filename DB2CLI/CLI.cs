@@ -7,6 +7,7 @@ using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.Commands;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.CreateNodes;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.DatabaseConnectionNodes;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.DropNodes;
+using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.SelectNodes;
 
 namespace DB2CLI
 {
@@ -58,6 +59,7 @@ namespace DB2CLI
             else if(node is CreateTableNode) _database.CreateTable((CreateTableNode)node);
             else if(node is DropTableNode) _database.DropTable((DropTableNode)node);
             else if (node is InsertNode) _database.InsertRecord((InsertNode)node);
+            else if (node is SelectNode) _database.SelectRecords((SelectNode)node);
             else if(node is AllTablesNode) _database.ShowTables();
             else if(node is SuperNode) _database.ShowSuperBlock();
         }

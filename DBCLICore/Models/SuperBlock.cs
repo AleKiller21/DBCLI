@@ -65,7 +65,7 @@ namespace DBCLICore.Models
             iterator += sizeof(int);
             super.DirectorySize = BitConverter.ToInt32(buffer, iterator);
             iterator += sizeof(int);
-            super.DatabaseSize = BitConverter.ToInt32(buffer, iterator);
+            super.DatabaseSize = BitConverter.ToInt64(buffer, iterator);
             iterator += sizeof(long);
             super.TotalInodes = BitConverter.ToInt32(buffer, iterator);
             iterator += sizeof(int);
