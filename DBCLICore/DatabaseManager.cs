@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using DBCLICore.Exceptions;
 using DBCLICore.Models;
+using SqlParser.SyntaxAnalyser.Nodes;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.CreateNodes;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.DropNodes;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.SelectNodes;
@@ -117,11 +118,9 @@ namespace DBCLICore
 
             var inode = ManagerUtilities.GetInode(entry.Inode);
             var records = _fileStream.ReadRecords(inode);
-            if (node.Columns[0].ToString() == "*") return SelectAllRecords(records, inode.Columns);
-            else
-            {
-                
-            }
+            if (node.Columns[0].ToString() == "*") return ProyectAllRecords(records, inode.Columns);
+
+            return ProyectFilteredColumns(records, inode.Columns, node.Columns);
         }
 
         public List<string> ShowTables()
@@ -163,9 +162,37 @@ namespace DBCLICore
             _fileStream.WriteInode(inode);
         }
 
-        private List<string> SelectAllRecords(List<Record> records, List<ColumnMetadata> columns)
+        private List<string> ProyectAllRecords(List<Record> records, List<ColumnMetadata> columns)
         {
             return FormatProyection(records, columns);
+        }
+
+        private List<string> ProyectFilteredColumns(List<Record> records, List<ColumnMetadata> inodeColumns, List<IdNode> filtetedColumns)
+        {
+            var columnPositions = new List<int>();
+            foreach (var t in filtetedColumns)
+            {
+                for (var x = 0; x < inodeColumns.Count; x++)
+                {
+                    if (!new string(inodeColumns[x].Name).Replace("\0", string.Empty).Equals(t.ToString())) continue;
+
+                    columnPositions.Add(x);
+                    break;
+                }
+            }
+
+            var newColumns = columnPositions.Select(pos => inodeColumns[pos]).ToList();
+            var newRecords = new List<Record>();
+            foreach (var record in records)
+            {
+                var newRecord = new Record
+                {
+                    Values = columnPositions.Select(pos => record.Values[pos]).ToList()
+                };
+                newRecords.Add(newRecord);
+            }
+
+            return FormatProyection(newRecords, newColumns);
         }
 
         private List<string> FormatProyection(List<Record> records, List<ColumnMetadata> columns)
