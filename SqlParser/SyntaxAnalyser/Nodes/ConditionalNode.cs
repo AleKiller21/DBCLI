@@ -6,5 +6,7 @@ namespace SqlParser.SyntaxAnalyser.Nodes
     {
         public IdNode LeftOperand;
         public LiteralNode RightOperand;
+
+        public abstract bool Evaluate(dynamic leftOperandValue);
     }
 }

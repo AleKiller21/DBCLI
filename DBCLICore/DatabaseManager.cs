@@ -7,6 +7,8 @@ using System.Text;
 using DBCLICore.Exceptions;
 using DBCLICore.Models;
 using SqlParser.SyntaxAnalyser.Nodes;
+using SqlParser.SyntaxAnalyser.Nodes.ExpressionNodes;
+using SqlParser.SyntaxAnalyser.Nodes.Operators;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.CreateNodes;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.DropNodes;
 using SqlParser.SyntaxAnalyser.Nodes.StatementNodes.SelectNodes;
@@ -118,9 +120,7 @@ namespace DBCLICore
 
             var inode = ManagerUtilities.GetInode(entry.Inode);
             var records = _fileStream.ReadRecords(inode);
-            if (node.Columns[0].ToString() == "*") return ProyectAllRecords(records, inode.Columns);
-
-            return ProyectFilteredColumns(records, inode.Columns, node.Columns);
+            return ProyectSelection(records, inode.Columns, node.Columns, node.Selection);
         }
 
         public List<string> ShowTables()
@@ -167,10 +167,10 @@ namespace DBCLICore
             return FormatProyection(records, columns);
         }
 
-        private List<string> ProyectFilteredColumns(List<Record> records, List<ColumnMetadata> inodeColumns, List<IdNode> filtetedColumns)
+        private List<string> ProyectFilteredColumns(List<Record> records, List<ColumnMetadata> inodeColumns, List<IdNode> filteredColumns)
         {
             var columnPositions = new List<int>();
-            foreach (var t in filtetedColumns)
+            foreach (var t in filteredColumns)
             {
                 for (var x = 0; x < inodeColumns.Count; x++)
                 {
@@ -193,6 +193,35 @@ namespace DBCLICore
             }
 
             return FormatProyection(newRecords, newColumns);
+        }
+
+        private List<string> ProyectSelection(List<Record> records, List<ColumnMetadata> columns, List<IdNode> filteredColumns,
+            ConditionalExpressionNode selection)
+        {
+            var node = selection as UnaryExpressionNode;
+            if(node == null) return filteredColumns[0].ToString() == "*" ? ProyectAllRecords(records, columns) : ProyectFilteredColumns(records, columns, filteredColumns);
+
+            var expression = node.Expression;
+            var selectionColumn = expression.LeftOperand.ToString();
+            var filteredRecords = new List<Record>();
+            var columnPos = -1;
+
+            for (var i = 0; i < columns.Count; i++)
+            {
+                if(!new string(columns[i].Name).Replace("\0", string.Empty).Equals(selectionColumn)) continue;
+                columnPos = i;
+                break;
+            }
+
+            if (columnPos == -1) throw new ColumnNotFoundException();
+            foreach (var record in records)
+            {
+                var value = record.Values[columnPos].Value.Evaluate();
+                if (value is string) value = ((string) value).Replace("\0", string.Empty);
+                if(expression.Evaluate(value)) filteredRecords.Add(record);
+            }
+
+            return filteredColumns[0].ToString() == "*" ? ProyectAllRecords(filteredRecords, columns) : ProyectFilteredColumns(filteredRecords, columns, filteredColumns);
         }
 
         private List<string> FormatProyection(List<Record> records, List<ColumnMetadata> columns)

@@ -176,6 +176,7 @@ namespace DBCLICore
             {
                 Console.WriteLine(print);
             }
+            Console.Write("\n");
         }
     }
 }

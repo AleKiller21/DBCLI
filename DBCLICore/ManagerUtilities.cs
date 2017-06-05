@@ -88,7 +88,7 @@ namespace DBCLICore
 
         public static DirectoryEntry GetDirectoryEntry(string tableName)
         {
-            return Disk.Structures.Directory.FirstOrDefault(entry => CharArrayToString(entry.Name).Equals(tableName));
+            return Disk.Structures.Directory.FirstOrDefault(entry => CharArrayToString(entry.Name).Equals(tableName) && !entry.Available);
         }
 
         public static Inode GetInode(int inumber)

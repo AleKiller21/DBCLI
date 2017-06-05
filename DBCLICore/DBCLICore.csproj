@@ -40,6 +40,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Exceptions\ColumnNotFoundException.cs" />
     <Compile Include="Exceptions\ColumnSizeMismatchException.cs" />
     <Compile Include="Exceptions\ColumnTypeMismatchException.cs" />
     <Compile Include="Exceptions\ColumnSizeOutOfRangeException.cs" />

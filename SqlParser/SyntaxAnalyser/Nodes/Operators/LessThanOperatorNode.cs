@@ -8,5 +8,9 @@ namespace SqlParser.SyntaxAnalyser.Nodes.Operators
 {
     public class LessThanOperatorNode : ConditionalNode
     {
+        public override bool Evaluate(dynamic leftOperandValue)
+        {
+            return leftOperandValue < RightOperand.Evaluate();
+        }
     }
 }

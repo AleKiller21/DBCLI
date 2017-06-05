@@ -57,9 +57,15 @@ namespace SqlParser
                 }
                 try
                 {
-                    var lexeme = new StringBuilder(_currentSymbol + "");
+                    //var lexeme = new StringBuilder(_currentSymbol + "");
+                    StringBuilder lexeme = new StringBuilder();
                     var row = _row;
                     var col = _col;
+                    while (!char.IsWhiteSpace(_currentSymbol))
+                    {
+                        lexeme.Append(_currentSymbol);
+                        _currentSymbol = GetNextSymbol();
+                    }
                     var token = new Token(lexeme.ToString(), _operators[lexeme.ToString()], row, col);
                     _currentSymbol = GetNextSymbol();
                     return token;
